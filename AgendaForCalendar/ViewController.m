@@ -7,11 +7,36 @@
 //
 
 #import "ViewController.h"
+typedef enum : NSUInteger {
+    Sunday = 1,
+    Monday,
+    Tuesday,
+    Wednesday,
+    Thursday,
+    Friday,
+    Saturday,
+} WeekdayName;
+
+typedef enum : NSUInteger {
+    January = 1,
+    February,
+    March,
+    April,
+    May,
+    June,
+    July,
+    August,
+    September,
+    October,
+    November,
+    December
+} MonthName;
 
 @interface CalendarDay : NSObject
 @property (readwrite) NSString *displayDate;
 @property (readwrite) NSArray *eventsOnDate;
 @property (readwrite) BOOL isDateSelected;
+@property (readwrite) NSDate *associatedDate;
 @end
 
 @implementation CalendarDay
@@ -64,32 +89,132 @@
     
     [self layoutIfNeeded];
 }
+
+
 @end
 
-typedef enum : NSUInteger {
-    Sunday,
-    Monday,
-    Tuesday,
-    Wednesday,
-    Thursday,
-    Friday,
-    Saturday,
-} WeekdayName;
+@interface CalendarViewCellWithMonth : CalendarViewCell
+@property (nonatomic) UILabel *monthName;
+@end
 
-typedef enum : NSUInteger {
-    January = 1,
-    February,
-    March,
-    April,
-    May,
-    June,
-    July,
-    August,
-    September,
-    October,
-    November,
-    December
-} MonthName;
+@implementation CalendarViewCellWithMonth
+
+- (instancetype)initWithFrame:(CGRect)frame {
+    
+    self = [super initWithFrame:frame];
+    
+    if (self) {
+        self.dateText = [[UILabel alloc] initWithFrame:self.contentView.frame];
+        
+        super.dateText.textAlignment = NSTextAlignmentCenter;
+        [self.contentView addSubview:super.dateText];
+        
+        self.monthName = [[UILabel alloc] initWithFrame:CGRectZero];
+        _monthName.textAlignment = NSTextAlignmentCenter;
+        [self.contentView addSubview:_monthName];
+    }
+    
+    return self;
+}
+
+-(void)layoutSubviews {
+    
+}
+
+- (void)updateWithModel:(CalendarDay *)calendarDay {
+    
+    self.dateText.text = calendarDay.displayDate;
+    
+    CALayer *layer = self.contentView.layer;
+    
+    if (calendarDay.displayDate.integerValue == 1) {
+        NSDateComponents *componentsFromCalendarDay = [[NSCalendar currentCalendar] components:NSCalendarUnitMonth | NSCalendarUnitYear fromDate:calendarDay.associatedDate];
+        
+        NSString *monthText = [NSString stringWithFormat:@"%@", [self shortSymbolForMonth:(int)[componentsFromCalendarDay month]]];
+        
+        self.dateText.frame = CGRectMake(0, 0, self.contentView.frame.size.width, self.contentView.frame.size.height/2);
+        [self.monthName setFrame:CGRectMake(0, self.contentView.frame.size.height/2, self.contentView.frame.size.width, self.contentView.frame.size.height/2)];
+        self.monthName.text = monthText;
+    } else {
+        _monthName.hidden = YES;
+    }
+    
+    if (calendarDay.isDateSelected) {
+        layer.backgroundColor = [[UIColor blueColor] CGColor];
+        layer.cornerRadius = self.contentView.frame.size.width/2;
+        super.dateText.textColor = [UIColor whiteColor];
+        super.dateText.font = [UIFont boldSystemFontOfSize:selectedDateFontSize];
+        _monthName.textColor = [UIColor whiteColor];
+    
+    } else {
+        layer.backgroundColor = [[UIColor clearColor] CGColor];
+        super.dateText.textColor = [UIColor darkTextColor];
+        super.dateText.font = [UIFont systemFontOfSize:deselectedDateFontSize];
+        _monthName.textColor = [UIColor darkTextColor];
+        //        _monthName.font = [UIFont systemFontOfSize:deselectedDateFontSize];
+    }
+    
+    [self layoutIfNeeded];
+}
+
+- (NSString *)shortSymbolForMonth:(int)monthIndex {
+    
+    NSString *monthName;
+    
+    switch (monthIndex) {
+        case January:
+            monthName = NSLocalizedString(@"Jan", nil);
+            break;
+            
+        case February:
+            monthName = NSLocalizedString(@"Feb", nil);
+            break;
+            
+        case March:
+            monthName = NSLocalizedString(@"Mar", nil);
+            break;
+            
+        case April:
+            monthName = NSLocalizedString(@"Apr", nil);
+            break;
+            
+        case May:
+            monthName = NSLocalizedString(@"May", nil);
+            break;
+            
+        case June:
+            monthName = NSLocalizedString(@"Jun", nil);
+            break;
+            
+        case July:
+            monthName = NSLocalizedString(@"Jul", nil);
+            break;
+            
+        case August:
+            monthName = NSLocalizedString(@"Aug", nil);
+            break;
+            
+        case September:
+            monthName = NSLocalizedString(@"Sep", nil);
+            break;
+            
+        case October:
+            monthName = NSLocalizedString(@"Oct", nil);
+            break;
+            
+        case November:
+            monthName = NSLocalizedString(@"Nov", nil);
+            break;
+            
+        case December:
+            monthName = NSLocalizedString(@"Dec", nil);
+            break;
+    }
+    
+    return monthName;
+}
+
+@end
 
 @interface ViewController () <UICollectionViewDelegate, UICollectionViewDataSource, UIScrollViewDelegate, UITableViewDelegate, UITableViewDataSource>
 
@@ -99,6 +224,7 @@ typedef enum : NSUInteger {
     CGFloat startXCoordinateForView;
     CGFloat totalWidth;
     CGFloat widthForOneDay;
+    BOOL isExpanded;
 }
 
 @property (nonatomic) UITableView *tableView;
@@ -112,38 +238,38 @@ typedef enum : NSUInteger {
 @implementation ViewController
 
 # pragma mark - Data formatter
-// dayIndex starts from 0-6, week starts from Sunday = 0 Saturday = 6
+// dayIndex starts from 1-7, week starts from Sunday = 1 Saturday = 7
 - (NSString *)symbolForDay:(int)dayIndex {
     
     NSString *dayName;
     
     switch (dayIndex) {
         case Sunday:
-            dayName = NSLocalizedString(@"S", nil);
+            dayName = NSLocalizedString(@"SU", nil);
             break;
             
         case Monday:
-            dayName = NSLocalizedString(@"M", nil);
+            dayName = NSLocalizedString(@"MO", nil);
             break;
         
         case Tuesday:
-            dayName = NSLocalizedString(@"T", nil);
+            dayName = NSLocalizedString(@"TU", nil);
             break;
         
         case Wednesday:
-            dayName = NSLocalizedString(@"W", nil);
+            dayName = NSLocalizedString(@"WE", nil);
             break;
         
         case Thursday:
-            dayName = NSLocalizedString(@"T", nil);
+            dayName = NSLocalizedString(@"TH", nil);
             break;
         
         case Friday:
-            dayName = NSLocalizedString(@"F", nil);
+            dayName = NSLocalizedString(@"FR", nil);
             break;
         
         case Saturday:
-            dayName = NSLocalizedString(@"S", nil);
+            dayName = NSLocalizedString(@"SA", nil);
             break;
     }
     
@@ -214,7 +340,7 @@ typedef enum : NSUInteger {
 //    [_dayHeaderView setAutoresizingMask:UIViewAutoresizingFlexibleWidth];
     _dayHeaderView.backgroundColor = [UIColor grayColor];
     
-    for (int index=0; index<7; index++) {
+    for (int index=1; index<=7; index++) {
         UILabel *dayView = [[UILabel alloc] initWithFrame:CGRectMake(startXCoordinateForView, 0, widthForOneDay, heightOfView)];
         
         dayView.text = [self symbolForDay:index];
@@ -228,7 +354,82 @@ typedef enum : NSUInteger {
     [self.view addSubview:self.dayHeaderView];
 }
 
+- (NSInteger)daysBetweenDate:(NSDate*)fromDateTime andDate:(NSDate*)toDateTime
+{
+    NSDate *fromDate;
+    NSDate *toDate;
+    
+    NSCalendar *calendar = [NSCalendar currentCalendar];
+    
+    [calendar rangeOfUnit:NSCalendarUnitDay startDate:&fromDate
+                 interval:NULL forDate:fromDateTime];
+    [calendar rangeOfUnit:NSCalendarUnitDay startDate:&toDate
+                 interval:NULL forDate:toDateTime];
+    
+    NSDateComponents *difference = [calendar components:NSCalendarUnitDay
+                                               fromDate:fromDate toDate:toDate options:0];
+    
+    return [difference day];
+}
+
+- (void)populateDataSource {
+    
+    if (!self.listOfItems) {
+        _listOfItems = [NSMutableArray new];
+    }
+    
+    NSCalendar *gregorian = [NSCalendar currentCalendar];
+    
+    NSDate *firstDate = [NSDate dateWithTimeIntervalSince1970:1262476800]; // Epoch time is 3rd Jan 2010. 1262476800 is the time interval since 1970
+    NSDate *endDate = [NSDate dateWithTimeIntervalSince1970:1578700800]; // Epoch time is 11th Jan 2020. 1578700800 is the time interval since 1970
+    
+    NSInteger daysBetweenDates = [self daysBetweenDate:firstDate andDate:endDate];
+    NSDateComponents *componentsForFirstDate = [gregorian components:NSCalendarUnitMonth | NSCalendarUnitDay | NSCalendarUnitYear fromDate:firstDate];
+    
+    // Get the weekday component of the current date
+    NSDateComponents *weekdayComponents = [gregorian components:NSCalendarUnitWeekday fromDate:firstDate];
+    
+    /*
+     Create a date components to represent the number of days to subtract
+     from the current date.
+     The weekday value for Sunday in the Gregorian calendar is 1, so
+     subtract 1 from the number
+     of days to subtract from the date in question.  (If today's Sunday,
+     subtract 0 days.)
+     */
+    NSDateComponents *componentsToSubtract = [[NSDateComponents alloc] init];
+    /* Substract [gregorian firstWeekday] to handle first day of the week being something else than Sunday */
+    [componentsToSubtract setDay: - ([weekdayComponents weekday] - [gregorian firstWeekday])];
+    
+    NSDate *associatedDate = firstDate;
+    
+    NSDateComponents* deltaComps = [NSDateComponents new];
+    
+    
+    for (NSInteger index = componentsForFirstDate.day; index <= daysBetweenDates; index++) {
+        
+        CalendarDay *calendarDay = [CalendarDay new];
+        
+        if (index == componentsForFirstDate.day) {
+            [deltaComps setDay:0];
+        } else {
+            [deltaComps setDay:1];
+        }
+        associatedDate = [gregorian dateByAddingComponents:deltaComps toDate:associatedDate options:0];
+        calendarDay.associatedDate = associatedDate;
+        
+        calendarDay.eventsOnDate = nil;
+        NSDateComponents *components = [gregorian components:NSCalendarUnitDay fromDate:associatedDate];
+        calendarDay.displayDate = [NSString stringWithFormat:@"%ld", components.day];
+        
+        [self.listOfItems addObject:calendarDay];
+    }
+}
+
 - (void)initiateCalendarView {
+    
+    [self populateDataSource];
+    
     UICollectionViewFlowLayout *flowLayout=[[UICollectionViewFlowLayout alloc] init];
     
     [flowLayout setItemSize:CGSizeMake(320/6, 320/6)];
@@ -247,9 +448,30 @@ typedef enum : NSUInteger {
     [_collectionView setDelegate:self];
     
     [_collectionView registerClass:[CalendarViewCell class] forCellWithReuseIdentifier:@"CellIdentifier"];
+    [_collectionView registerClass:[CalendarViewCellWithMonth class] forCellWithReuseIdentifier:@"CellIdentifierForCellWithMonth"];
     [_collectionView setBackgroundColor:[UIColor whiteColor]];
     
+    [_collectionView addObserver:self forKeyPath:@"contentSize" options:NSKeyValueObservingOptionOld context:NULL];
+
     [self.view addSubview:_collectionView];
+}
+
+- (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary  *)change context:(void *)context
+{
+    // You will get here when the reloadData finished
+    for (CalendarDay *day in _listOfItems) {
+        if ([day.associatedDate isEqual:[NSDate date]]) {
+            
+//            NSIndexPath
+//            [UIView animateWithDuration:0.1 animations:^{
+//                [_collectionView scrollToItemAtIndexPath:indexPath atScrollPosition:UICollectionViewScrollPositionCenteredVertically animated:YES];
+//            }completion:^(BOOL finished){
+//                [_collectionView selectItemAtIndexPath:indexPath animated:YES scrollPosition:UICollectionViewScrollPositionCenteredVertically];
+//            }];
+            
+            
+        }
+    }
 }
 
 - (void)setSelectedDay:(CalendarDay *)selectedDay {
@@ -261,27 +483,36 @@ typedef enum : NSUInteger {
 }
 
 - (void)initiateCurrentMonthOnLaunch {
+    
     // initialize
     NSDate *today = [NSDate date]; //Get a date object for today's date
+    
+    NSCalendar *gregorianCalendar = [NSCalendar calendarWithIdentifier:NSCalendarIdentifierGregorian];
+    NSInteger weekDay = [gregorianCalendar component:NSCalendarUnitWeekday fromDate:today];
+    NSInteger monthDate = [gregorianCalendar component:NSCalendarUnitDay fromDate:today];
+    NSInteger monthNumber = [gregorianCalendar component:NSCalendarUnitMonth fromDate:today];
+    
+    NSInteger weekDay2 = [gregorianCalendar component:NSCalendarUnitWeekdayOrdinal fromDate:today];
+    
     NSCalendar *currentCalendar = [NSCalendar currentCalendar];
     NSDateComponents *components = [currentCalendar components:NSCalendarUnitDay | NSCalendarUnitMonth | NSCalendarUnitYear fromDate:today];
     
-    _listOfItems = [NSMutableArray new];
+//    _listOfItems = [NSMutableArray new];
     
     self.title = [NSString stringWithFormat:@"%@ %ld", [self symbolForMonth:(int)[components month]], [components year]];
 
-    NSRange days = [currentCalendar rangeOfUnit:NSCalendarUnitDay
-                                         inUnit:NSCalendarUnitMonth
-                                        forDate:today];
-    
-    for (int index=1; index<=days.length; index++) {
-        CalendarDay *calendarDay = [CalendarDay new];
-        
-        calendarDay.displayDate = [NSString stringWithFormat:@"%d", index];
-        calendarDay.eventsOnDate = nil;
-        
-        [self.listOfItems addObject:calendarDay];
-    }
+//    NSRange days = [currentCalendar rangeOfUnit:NSCalendarUnitDay
+//                                         inUnit:NSCalendarUnitMonth
+//                                        forDate:today];
+//    
+//    for (int index=1; index<=days.length; index++) {
+//        CalendarDay *calendarDay = [CalendarDay new];
+//        
+//        calendarDay.displayDate = [NSString stringWithFormat:@"%d", index];
+//        calendarDay.eventsOnDate = nil;
+//        
+//        [self.listOfItems addObject:calendarDay];
+//    }
 }
 
 - (void)initiateEventListView {
@@ -318,10 +549,33 @@ typedef enum : NSUInteger {
     // set up calendar
     [self initiateCurrentMonthOnLaunch];
     
-//     [_collectionView scrollToItemAtIndexPath:[NSIndexPath indexPathForItem:0 inSection:0 ] atScrollPosition:UICollectionViewScrollPositionCenteredVertically animated:YES];
-//    [_collectionView selectItemAtIndexPath:[NSIndexPath indexPathForItem:8 inSection:0] animated:YES scrollPosition:UICollectionViewScrollPositionCenteredVertically];
+//    [self createToggleViewBarButton];
+}
+
+- (void)createToggleViewBarButton {
+    UIBarButtonItem *toggleViewBarButton = [[UIBarButtonItem alloc] initWithTitle:@"Hi" style:UIBarButtonItemStylePlain target:self action:@selector(toggleAgendaView:)];
+    self.navigationItem.rightBarButtonItem = toggleViewBarButton;
+}
+
+- (void)toggleAgendaView:(UIBarButtonItem *)button {
     
     
+    [UIView animateWithDuration:0.25 animations:^{
+        if (isExpanded) {
+            _collectionView.frame = CGRectMake(0, 0, 320, 200);
+        } else {
+            _collectionView.frame = CGRectMake(0, 0, 320, 500);
+        }
+        
+    }completion:^(BOOL finished) {
+        if (isExpanded) {
+            _tableView.frame = CGRectMake(0, 200, 320, 500);
+        } else {
+            _tableView.frame = CGRectMake(0, 500, 320, 200);
+        }
+    }];
+    
+    isExpanded =  !isExpanded;
 }
 
 #pragma mark - Custom Collection data source
@@ -343,14 +597,37 @@ typedef enum : NSUInteger {
     return YES;
 }
 
+#define OddColor [UIColor clearColor]
+#define EvenColor [UIColor groupTableViewBackgroundColor]
+
 // The cell that is returned must be retrieved from a call to -dequeueReusableCellWithReuseIdentifier:forIndexPath:
 - (UICollectionViewCell *)collectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath
 {
-    CalendarViewCell *cell = [collectionView dequeueReusableCellWithReuseIdentifier:@"CellIdentifier" forIndexPath:indexPath];
-    
     CalendarDay *calendarDay = _listOfItems[indexPath.row];
-    [cell updateWithModel:calendarDay];
     
+    NSDateComponents *componentsFromCalendarDay = [[NSCalendar currentCalendar] components:NSCalendarUnitMonth | NSCalendarUnitDay fromDate:calendarDay.associatedDate];
+    
+    if(componentsFromCalendarDay.day == 1) {
+        CalendarViewCell *cellWithMonth = [collectionView dequeueReusableCellWithReuseIdentifier:@"CellIdentifierForCellWithMonth" forIndexPath:indexPath];
+        
+        if (componentsFromCalendarDay.month % 2 == 0) {
+            cellWithMonth.backgroundColor = EvenColor;
+        } else {
+            cellWithMonth.backgroundColor = OddColor;
+        }
+        [cellWithMonth updateWithModel:calendarDay];
+        
+        return cellWithMonth;
+    }
+    
+    CalendarViewCell *cell = [collectionView dequeueReusableCellWithReuseIdentifier:@"CellIdentifier" forIndexPath:indexPath];
+    if (componentsFromCalendarDay.month % 2 == 0) {
+        cell.backgroundColor = EvenColor;
+    } else {
+        cell.backgroundColor = OddColor;
+    }
+    [cell updateWithModel:calendarDay];
+
     return cell;
 }
 
@@ -376,10 +653,17 @@ typedef enum : NSUInteger {
         
         [cell updateWithModel:day];
         
+        [self setHeaderTextForDay:day];
+        
         _previouslySelectedIndexPath = indexPath;
         
         [_tableView scrollToRowAtIndexPath:[NSIndexPath indexPathForRow:0 inSection:indexPath.row] atScrollPosition:UITableViewScrollPositionTop animated:YES];
     }
+}
+
+- (void)setHeaderTextForDay:(CalendarDay *)calendarDay {
+    NSDateComponents *componentsFromCalendarDay = [[NSCalendar currentCalendar] components:NSCalendarUnitMonth | NSCalendarUnitYear fromDate:calendarDay.associatedDate];
+    self.title = [NSString stringWithFormat:@"%@ %ld", [self symbolForMonth:(int)[componentsFromCalendarDay month]], [componentsFromCalendarDay year]];
 }
 
 #pragma mark - Scrollview delegate
@@ -494,9 +778,9 @@ typedef enum : NSUInteger {
     
     NSIndexPath *indexPathForItemInDateCollection = [NSIndexPath indexPathForItem:indexPathForDateInCollectionView inSection:0];
     
-//    [_collectionView selectItemAtIndexPath:indexPathForItemInDateCollection
-//                                  animated:YES
-//                            scrollPosition:UICollectionViewScrollPositionTop];
+    [_collectionView selectItemAtIndexPath:indexPathForItemInDateCollection
+                                  animated:YES
+                            scrollPosition:UICollectionViewScrollPositionTop];
     
 //    [_collectionView scrollToItemAtIndexPath:[NSIndexPath indexPathForItem:indexPathForDateInCollectionView inSection:0] atScrollPosition:UICollectionViewScrollPositionTop animated:YES];
     
