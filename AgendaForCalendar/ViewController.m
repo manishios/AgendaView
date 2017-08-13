@@ -8,31 +8,8 @@
 
 #import "ViewController.h"
 #import "CalendarUtils.h"
-
-typedef enum : NSUInteger {
-    Sunday = 1,
-    Monday,
-    Tuesday,
-    Wednesday,
-    Thursday,
-    Friday,
-    Saturday,
-} WeekdayName;
-
-typedef enum : NSUInteger {
-    January = 1,
-    February,
-    March,
-    April,
-    May,
-    June,
-    July,
-    August,
-    September,
-    October,
-    November,
-    December
-} MonthName;
+#import "MonthUtil.h"
+#import "WeekdayUtil.h"
 
 @interface CalendarDay : NSObject
 @property (nonatomic, strong, readwrite) NSString *displayDate;
@@ -119,7 +96,7 @@ typedef enum : NSUInteger {
     if (calendarDay.displayDate.integerValue == 1) {
         NSDateComponents *componentsFromCalendarDay = [[CalendarUtils calendar] components:NSCalendarUnitMonth | NSCalendarUnitYear fromDate:calendarDay.associatedDate];
         
-        NSString *monthText = [NSString stringWithFormat:@"%@", [self shortSymbolForMonth:(int)[componentsFromCalendarDay month]]];
+        NSString *monthText = [NSString stringWithFormat:@"%@", [MonthUtil shortSymbolForMonth:(int)[componentsFromCalendarDay month]]];
         
         self.dateText.frame = CGRectMake(0, 0, self.contentView.frame.size.width, self.contentView.frame.size.height/2);
         [self.monthName setFrame:CGRectMake(0, self.contentView.frame.size.height/2, self.contentView.frame.size.width, self.contentView.frame.size.height/2)];
@@ -140,63 +117,6 @@ typedef enum : NSUInteger {
     }
     
     [self layoutIfNeeded];
-}
-
-- (NSString *)shortSymbolForMonth:(int)monthIndex {
-    
-    NSString *monthName;
-    
-    switch (monthIndex) {
-        case January:
-            monthName = NSLocalizedString(@"Jan", nil);
-            break;
-            
-        case February:
-            monthName = NSLocalizedString(@"Feb", nil);
-            break;
-            
-        case March:
-            monthName = NSLocalizedString(@"Mar", nil);
-            break;
-            
-        case April:
-            monthName = NSLocalizedString(@"Apr", nil);
-            break;
-            
-        case May:
-            monthName = NSLocalizedString(@"May", nil);
-            break;
-            
-        case June:
-            monthName = NSLocalizedString(@"Jun", nil);
-            break;
-            
-        case July:
-            monthName = NSLocalizedString(@"Jul", nil);
-            break;
-            
-        case August:
-            monthName = NSLocalizedString(@"Aug", nil);
-            break;
-            
-        case September:
-            monthName = NSLocalizedString(@"Sep", nil);
-            break;
-            
-        case October:
-            monthName = NSLocalizedString(@"Oct", nil);
-            break;
-            
-        case November:
-            monthName = NSLocalizedString(@"Nov", nil);
-            break;
-            
-        case December:
-            monthName = NSLocalizedString(@"Dec", nil);
-            break;
-    }
-    
-    return monthName;
 }
 
 @end
@@ -225,113 +145,18 @@ typedef enum : NSUInteger {
 
 @implementation ViewController
 
-# pragma mark - Data formatter
-// dayIndex starts from 1-7, week starts from Sunday = 1 Saturday = 7
-- (NSString *)symbolForDay:(int)dayIndex {
-    
-    NSString *dayName;
-    
-    switch (dayIndex) {
-        case Sunday:
-            dayName = NSLocalizedString(@"SU", nil);
-            break;
-            
-        case Monday:
-            dayName = NSLocalizedString(@"MO", nil);
-            break;
-        
-        case Tuesday:
-            dayName = NSLocalizedString(@"TU", nil);
-            break;
-        
-        case Wednesday:
-            dayName = NSLocalizedString(@"WE", nil);
-            break;
-        
-        case Thursday:
-            dayName = NSLocalizedString(@"TH", nil);
-            break;
-        
-        case Friday:
-            dayName = NSLocalizedString(@"FR", nil);
-            break;
-        
-        case Saturday:
-            dayName = NSLocalizedString(@"SA", nil);
-            break;
-    }
-    
-    return dayName;
-}
-
-- (NSString *)symbolForMonth:(int)monthIndex {
-    
-    NSString *monthName;
-    
-    switch (monthIndex) {
-        case January:
-            monthName = NSLocalizedString(@"January", nil);
-            break;
-            
-        case February:
-            monthName = NSLocalizedString(@"February", nil);
-            break;
-            
-        case March:
-            monthName = NSLocalizedString(@"March", nil);
-            break;
-            
-        case April:
-            monthName = NSLocalizedString(@"April", nil);
-            break;
-            
-        case May:
-            monthName = NSLocalizedString(@"May", nil);
-            break;
-            
-        case June:
-            monthName = NSLocalizedString(@"June", nil);
-            break;
-            
-        case July:
-            monthName = NSLocalizedString(@"July", nil);
-            break;
-            
-        case August:
-            monthName = NSLocalizedString(@"August", nil);
-            break;
-            
-        case September:
-            monthName = NSLocalizedString(@"September", nil);
-            break;
-            
-        case October:
-            monthName = NSLocalizedString(@"October", nil);
-            break;
-            
-        case November:
-            monthName = NSLocalizedString(@"November", nil);
-            break;
-            
-        case December:
-            monthName = NSLocalizedString(@"December", nil);
-            break;
-    }
-    
-    return monthName;
-}
-
 # pragma mark - Basic view initialization
 - (void)initiateHeaderView {
 
     _dayHeaderView = [[UIView alloc] initWithFrame:CGRectMake(startXCoordinateForView, startYCoordinateForView, self.view.bounds.size.width, heightOfView)];
-//    [_dayHeaderView setAutoresizingMask:UIViewAutoresizingFlexibleWidth];
+    [_dayHeaderView setAutoresizingMask:UIViewAutoresizingFlexibleWidth];
     _dayHeaderView.backgroundColor = [UIColor grayColor];
     
-    for (int index=1; index<=7; index++) {
+    for (int index=0; index<self.daysInWeek; index++) {
+        
         UILabel *dayView = [[UILabel alloc] initWithFrame:CGRectMake(startXCoordinateForView, 0, widthForOneDay, heightOfView)];
         
-        dayView.text = [self symbolForDay:index];
+        dayView.text = [WeekdayUtil shortSymbolForDay:(index+1)];
         dayView.textAlignment = NSTextAlignmentCenter;
         dayView.textColor = [UIColor whiteColor];
         
@@ -421,12 +246,9 @@ typedef enum : NSUInteger {
     
     UICollectionViewFlowLayout *flowLayout=[[UICollectionViewFlowLayout alloc] init];
     
-    [flowLayout setItemSize:CGSizeMake(320/6, 320/6)];
-    [flowLayout setMinimumLineSpacing:5];
-    [flowLayout setMinimumInteritemSpacing:1];
+    [flowLayout setItemSize:CGSizeMake(widthForOneDay, widthForOneDay)];
     [flowLayout setSectionInset:UIEdgeInsetsMake(0, 0, 0, 0)];
-    [flowLayout setScrollDirection:UICollectionViewScrollDirectionVertical];
-    
+
     startYCoordinateForView = self.dayHeaderView.frame.origin.y + self.dayHeaderView.frame.size.height;
     heightOfView = (self.view.frame.size.height - startYCoordinateForView)/2;
     startXCoordinateForView = CGFLOAT_MIN;
@@ -442,48 +264,8 @@ typedef enum : NSUInteger {
     
     [self.view addSubview:_collectionView];
     
+    // Select the current date on launch
     [self scrollToDay];
-}
-
-- (void)setSelectedDay:(CalendarDay *)selectedDay {
-    
-}
-
-- (NSArray *)calendarDaysForMonth:(int)monthIndex{
-    return nil;
-}
-
-- (void)initiateCurrentMonthOnLaunch {
-    
-    // initialize
-    NSDate *today = [NSDate date]; //Get a date object for today's date
-    
-    NSCalendar *gregorianCalendar = [NSCalendar calendarWithIdentifier:NSCalendarIdentifierGregorian];
-    NSInteger weekDay = [gregorianCalendar component:NSCalendarUnitWeekday fromDate:today];
-    NSInteger monthDate = [gregorianCalendar component:NSCalendarUnitDay fromDate:today];
-    NSInteger monthNumber = [gregorianCalendar component:NSCalendarUnitMonth fromDate:today];
-    
-    NSInteger weekDay2 = [gregorianCalendar component:NSCalendarUnitWeekdayOrdinal fromDate:today];
-    
-    NSCalendar *currentCalendar = [CalendarUtils calendar];
-    NSDateComponents *components = [currentCalendar components:NSCalendarUnitDay | NSCalendarUnitMonth | NSCalendarUnitYear fromDate:today];
-    
-//    _listOfItems = [NSMutableArray new];
-    
-    self.title = [NSString stringWithFormat:@"%@ %ld", [self symbolForMonth:(int)[components month]], [components year]];
-
-//    NSRange days = [currentCalendar rangeOfUnit:NSCalendarUnitDay
-//                                         inUnit:NSCalendarUnitMonth
-//                                        forDate:today];
-//    
-//    for (int index=1; index<=days.length; index++) {
-//        CalendarDay *calendarDay = [CalendarDay new];
-//        
-//        calendarDay.displayDate = [NSString stringWithFormat:@"%d", index];
-//        calendarDay.eventsOnDate = nil;
-//        
-//        [self.listOfItems addObject:calendarDay];
-//    }
 }
 
 - (void)initiateEventListView {
@@ -561,44 +343,9 @@ typedef enum : NSUInteger {
     isExpanded =  !isExpanded;
 }
 
+#define ItemsPerRow 7
+
 #pragma mark - Custom Collection data source
-- (CGSize)collectionView:(UICollectionView *)collectionView
-                  layout:(UICollectionViewLayout*)collectionViewLayout
-  sizeForItemAtIndexPath:(NSIndexPath *)indexPath {
-    
-    CGFloat width      = self.view.bounds.size.width;
-    CGFloat itemWidth  = roundf(width / self.daysInWeek);
-    CGFloat itemHeight = indexPath.item < self.daysInWeek ? 30.f : itemWidth;
-    
-    NSUInteger weekday = indexPath.item % self.daysInWeek;
-    
-    if (weekday == self.daysInWeek - 1) {
-        itemWidth = width - (itemWidth * (self.daysInWeek - 1));
-    }
-    
-    return CGSizeMake(itemWidth, itemHeight);
-}
-- (BOOL)collectionView:(UICollectionView *)collectionView canFocusItemAtIndexPath:(NSIndexPath *)indexPath {
-    return YES;
-}
-
-- (BOOL)collectionView:(UICollectionView *)collectionView shouldUpdateFocusInContext:(UICollectionViewFocusUpdateContext *)context NS_AVAILABLE_IOS(9_0) {
-    return YES;
-}
-- (void)collectionView:(UICollectionView *)collectionView didUpdateFocusInContext:(UICollectionViewFocusUpdateContext *)context withAnimationCoordinator:(UIFocusAnimationCoordinator *)coordinator NS_AVAILABLE_IOS(9_0) {
-    NSLog(@"");
-}
-- (nullable NSIndexPath *)indexPathForPreferredFocusedViewInCollectionView:(UICollectionView *)collectionView NS_AVAILABLE_IOS(9_0){
-    return focusedIndexPath;
-}
-
-- (NSIndexPath *)collectionView:(UICollectionView *)collectionView targetIndexPathForMoveFromItemAtIndexPath:(NSIndexPath *)originalIndexPath toProposedIndexPath:(NSIndexPath *)proposedIndexPath NS_AVAILABLE_IOS(9_0) {
-    return focusedIndexPath;
-}
-
-- (void)addDaysToDataSourceAfterMonth:(int)currentMonth {
-    
-}
 
 - (NSInteger)numberOfSectionsInCollectionView:(UICollectionView *)collectionView {
     return 1;
@@ -691,7 +438,7 @@ typedef enum : NSUInteger {
 
 - (void)setHeaderTextForDay:(CalendarDay *)calendarDay {
     NSDateComponents *componentsFromCalendarDay = [[CalendarUtils calendar] components:NSCalendarUnitMonth | NSCalendarUnitYear fromDate:calendarDay.associatedDate];
-    self.title = [NSString stringWithFormat:@"%@ %ld", [self symbolForMonth:(int)[componentsFromCalendarDay month]], [componentsFromCalendarDay year]];
+    self.title = [NSString stringWithFormat:@"%@ %ld", [MonthUtil symbolForMonth:(int)[componentsFromCalendarDay month]], [componentsFromCalendarDay year]];
 }
 
 #pragma mark - Scrollview delegate
@@ -771,9 +518,9 @@ typedef enum : NSUInteger {
 - (NSString *)tableView:(UITableView *)tableView titleForHeaderInSection:(NSInteger)section {
     CalendarDay *day = [_listOfItems objectAtIndex:section];
     
-    NSDateComponents *components = [[CalendarUtils calendar] components:NSCalendarUnitDay | NSCalendarUnitMonth | NSCalendarUnitYear fromDate:day.associatedDate];
+    NSDateComponents *components = [[CalendarUtils calendar] components:NSCalendarUnitWeekday | NSCalendarUnitDay | NSCalendarUnitMonth | NSCalendarUnitYear fromDate:day.associatedDate];
     
-    NSString *messageToDisplay = [NSString stringWithFormat:@"%@, %d %@ %ld", [self symbolForDay:(int)[components weekday]], (int)[components day], [self symbolForMonth:(int)[components month]], [components year]];
+    NSString *messageToDisplay = [NSString stringWithFormat:@"%@, %d %@ %ld", [WeekdayUtil symbolForDay:(int)[components weekday]], (int)[components day], [MonthUtil symbolForMonth:(int)[components month]], [components year]];
     
     return messageToDisplay;
 }

@@ -9,7 +9,6 @@
 #import <Foundation/Foundation.h>
 
 @interface CalendarUtils : NSObject
-//+ (NSBundle *)calendarBundle;
 + (NSCalendar *)calendar;
 + (NSInteger)currentYear;
 + (NSInteger)numberOfMonthsInYear;

@@ -9,12 +9,6 @@
 #import "CalendarUtils.h"
 
 @implementation CalendarUtils
-//+ (NSBundle *)calendarBundle
-//{
-//    NSBundle *podBundle = [NSBundle bundleForClass:CalendarUtils.self];
-//    NSURL *bundleURL = [podBundle URLForResource:@"SSCalendar" withExtension:@"bundle"];
-//    return [NSBundle bundleWithURL:bundleURL];
-//}
 
 + (NSCalendar *)calendar
 {
