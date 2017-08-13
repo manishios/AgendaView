@@ -49,9 +49,6 @@ typedef enum : NSUInteger {
 @property (nonatomic) UILabel *dateText;
 @end
 
-#define selectedDateFontSize    22
-#define deselectedDateFontSize    17
-
 @implementation CalendarViewCell
 
 - (instancetype)initWithFrame:(CGRect)frame {
@@ -68,10 +65,6 @@ typedef enum : NSUInteger {
     return self;
 }
 
--(void)layoutSubviews {
-    
-}
-
 - (void)updateWithModel:(CalendarDay *)calendarDay {
     
     self.dateText.text = calendarDay.displayDate;
@@ -80,13 +73,10 @@ typedef enum : NSUInteger {
     
     if (calendarDay.isDateSelected) {
         layer.backgroundColor = [[UIColor blueColor] CGColor];
-//        layer.cornerRadius = self.contentView.frame.size.width/2;
         _dateText.textColor = [UIColor whiteColor];
-//        _dateText.font = [UIFont boldSystemFontOfSize:selectedDateFontSize];
     } else {
         layer.backgroundColor = [[UIColor clearColor] CGColor];
         _dateText.textColor = [UIColor darkTextColor];
-//        _dateText.font = [UIFont systemFontOfSize:deselectedDateFontSize];
     }
     
     [self layoutIfNeeded];
@@ -95,7 +85,8 @@ typedef enum : NSUInteger {
 
 @end
 
-@interface CalendarViewCellWithMonth : CalendarViewCell
+@interface CalendarViewCellWithMonth : UICollectionViewCell
+@property (nonatomic) UILabel *dateText;
 @property (nonatomic) UILabel *monthName;
 @end
 
@@ -108,8 +99,8 @@ typedef enum : NSUInteger {
     if (self) {
         self.dateText = [[UILabel alloc] initWithFrame:self.contentView.frame];
         
-        super.dateText.textAlignment = NSTextAlignmentCenter;
-        [self.contentView addSubview:super.dateText];
+        self.dateText.textAlignment = NSTextAlignmentCenter;
+        [self.contentView addSubview:self.dateText];
         
         self.monthName = [[UILabel alloc] initWithFrame:CGRectZero];
         _monthName.textAlignment = NSTextAlignmentCenter;
@@ -117,10 +108,6 @@ typedef enum : NSUInteger {
     }
     
     return self;
-}
-
--(void)layoutSubviews {
-    
 }
 
 - (void)updateWithModel:(CalendarDay *)calendarDay {
@@ -143,17 +130,13 @@ typedef enum : NSUInteger {
     
     if (calendarDay.isDateSelected) {
         layer.backgroundColor = [[UIColor blueColor] CGColor];
-//        layer.cornerRadius = self.contentView.frame.size.width/2;
-        super.dateText.textColor = [UIColor whiteColor];
-        super.dateText.font = [UIFont boldSystemFontOfSize:selectedDateFontSize];
+        self.dateText.textColor = [UIColor whiteColor];
         _monthName.textColor = [UIColor whiteColor];
     
     } else {
         layer.backgroundColor = [[UIColor clearColor] CGColor];
-        super.dateText.textColor = [UIColor darkTextColor];
-        super.dateText.font = [UIFont systemFontOfSize:deselectedDateFontSize];
+        self.dateText.textColor = [UIColor darkTextColor];
         _monthName.textColor = [UIColor darkTextColor];
-        //        _monthName.font = [UIFont systemFontOfSize:deselectedDateFontSize];
     }
     
     [self layoutIfNeeded];
@@ -410,9 +393,6 @@ typedef enum : NSUInteger {
     
     NSDateComponents* deltaComps = [NSDateComponents new];
     
-    NSDate *dateToday = [NSDate date];
-    NSDateComponents *componentsForDay = [gregorian components:NSCalendarUnitMonth | NSCalendarUnitDay | NSCalendarUnitYear fromDate:dateToday];
-
     for (NSInteger index = componentsForFirstDate.day; index <= daysBetweenDates; index++) {
         
         CalendarDay *calendarDay = [CalendarDay new];
@@ -429,10 +409,9 @@ typedef enum : NSUInteger {
         NSDateComponents *components = [gregorian components:NSCalendarUnitDay fromDate:associatedDate];
         calendarDay.displayDate = [NSString stringWithFormat:@"%ld", components.day];
         
-        if ([componentsForDay.date isEqualToDate:calendarDay.associatedDate]) {
+        if ([CalendarUtils isDate1:[NSDate date] theSameDayAs:associatedDate]) {
             focusedIndexPath = [NSIndexPath indexPathForItem:(index - componentsForFirstDate.day) inSection:0];
         }
-        
         
         [self.listOfItems addObject:calendarDay];
     }
@@ -461,25 +440,9 @@ typedef enum : NSUInteger {
     [_collectionView registerClass:[CalendarViewCellWithMonth class] forCellWithReuseIdentifier:@"CellIdentifierForCellWithMonth"];
     [_collectionView setBackgroundColor:[UIColor whiteColor]];
     
-    [_collectionView addObserver:self forKeyPath:@"contentSize" options:NSKeyValueObservingOptionOld context:NULL];
-
     [self.view addSubview:_collectionView];
-}
-
-- (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary  *)change context:(void *)context
-{
-    // You will get here when the reloadData finished
-    for (CalendarDay *day in _listOfItems) {
-        if ([CalendarUtils isDate1:day.associatedDate theSameDayAs:self.selectedDate]) {
-            
-//            NSIndexPath *indexpath = [NSIndexPath indexPathForItem:0 inSection:0];
-//            [UIView animateWithDuration:0.1 animations:^{
-//                [_collectionView scrollToItemAtIndexPath:indexpath atScrollPosition:UICollectionViewScrollPositionCenteredVertically animated:YES];
-//            }completion:^(BOOL finished){
-//                [_collectionView selectItemAtIndexPath:indexpath animated:YES scrollPosition:UICollectionViewScrollPositionCenteredVertically];
-//            }];
-        }
-    }
+    
+    [self scrollToDay];
 }
 
 - (void)setSelectedDay:(CalendarDay *)selectedDay {
@@ -571,11 +534,6 @@ typedef enum : NSUInteger {
     
     // Initiate Event list view
     [self initiateEventListView];
-    
-    // set up calendar
-//    [self initiateCurrentMonthOnLaunch];
-    
-//    [self createToggleViewBarButton];
 }
 
 - (void)createToggleViewBarButton {
@@ -584,7 +542,6 @@ typedef enum : NSUInteger {
 }
 
 - (void)toggleAgendaView:(UIBarButtonItem *)button {
-    
     
     [UIView animateWithDuration:0.25 animations:^{
         if (isExpanded) {
@@ -639,11 +596,6 @@ typedef enum : NSUInteger {
     return focusedIndexPath;
 }
 
-//- (CGPoint)collectionView:(UICollectionView *)collectionView targetContentOffsetForProposedContentOffset:(CGPoint)proposedContentOffset NS_AVAILABLE_IOS(9_0) {
-//    
-// return focusedIndexPath.
-//}// customize the content offset to be applied during transition or update animations
-
 - (void)addDaysToDataSourceAfterMonth:(int)currentMonth {
     
 }
@@ -662,16 +614,12 @@ typedef enum : NSUInteger {
     return YES;
 }
 
-- (void)scrollToDay
-{
-    UICollectionViewFlowLayout *layout = (UICollectionViewFlowLayout *) _collectionView.collectionViewLayout;
-    
-    CalendarDay *start = [_listOfItems objectAtIndex:0];
-    
-    NSInteger row = [CalendarUtils numberOfDaysFrom:start.associatedDate To:self.selectedDate];
-    row = row - row % 7;
-    
-    _collectionView.contentOffset = CGPointMake(row * layout.itemSize.width, 0);
+- (void)scrollToDay {
+    [UIView animateWithDuration:0.1 animations:^{
+        [self.collectionView scrollToItemAtIndexPath:focusedIndexPath atScrollPosition:UICollectionViewScrollPositionCenteredVertically animated:NO];
+    }completion:^(BOOL finished){
+        [self collectionView:_collectionView didSelectItemAtIndexPath:focusedIndexPath];
+    }];
 }
 
 #define OddColor [UIColor clearColor]
@@ -685,7 +633,7 @@ typedef enum : NSUInteger {
     NSDateComponents *componentsFromCalendarDay = [[CalendarUtils calendar] components:NSCalendarUnitMonth | NSCalendarUnitDay fromDate:calendarDay.associatedDate];
     
     if(componentsFromCalendarDay.day == 1) {
-        CalendarViewCell *cellWithMonth = [collectionView dequeueReusableCellWithReuseIdentifier:@"CellIdentifierForCellWithMonth" forIndexPath:indexPath];
+        CalendarViewCellWithMonth *cellWithMonth = [collectionView dequeueReusableCellWithReuseIdentifier:@"CellIdentifierForCellWithMonth" forIndexPath:indexPath];
         
         if (componentsFromCalendarDay.month % 2 == 0) {
             cellWithMonth.backgroundColor = EvenColor;
@@ -695,21 +643,25 @@ typedef enum : NSUInteger {
         [cellWithMonth updateWithModel:calendarDay];
         
         return cellWithMonth;
-    }
-    
-    CalendarViewCell *cell = [collectionView dequeueReusableCellWithReuseIdentifier:@"CellIdentifier" forIndexPath:indexPath];
-    if (componentsFromCalendarDay.month % 2 == 0) {
-        cell.backgroundColor = EvenColor;
+        
     } else {
-        cell.backgroundColor = OddColor;
+        
+        CalendarViewCell *cell = [collectionView dequeueReusableCellWithReuseIdentifier:@"CellIdentifier" forIndexPath:indexPath];
+        if (componentsFromCalendarDay.month % 2 == 0) {
+            cell.backgroundColor = EvenColor;
+        } else {
+            cell.backgroundColor = OddColor;
+        }
+        [cell updateWithModel:calendarDay];
+        
+        if (self.selectedDate) {
+            [cell setSelected:[CalendarUtils isDate1:calendarDay.associatedDate theSameDayAs:self.selectedDate]];
+        }
+        
+        return cell;
     }
-    [cell updateWithModel:calendarDay];
     
-    if (self.selectedDate) {
-        [cell setSelected:[CalendarUtils isDate1:calendarDay.associatedDate theSameDayAs:self.selectedDate]];
-    }
-
-    return cell;
+    return nil;
 }
 
 - (void)collectionView:(UICollectionView *)collectionView didSelectItemAtIndexPath:(NSIndexPath *)indexPath {
@@ -743,6 +695,9 @@ typedef enum : NSUInteger {
 }
 
 #pragma mark - Scrollview delegate
+- (void)scrollViewWillBeginDragging:(UIScrollView *)scrollView {
+    self.selectedDate = nil;
+}
 
 - (void)scrollViewDidEndScrollingAnimation:(UIScrollView *)scrollView {
     if (scrollView.tag == 1001 && [scrollView isKindOfClass:[UICollectionView class]]) {
@@ -825,13 +780,8 @@ typedef enum : NSUInteger {
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
     
-    NSInteger indexPathForDateInCollectionView = indexPath.section;
-    
-    CalendarDay *day = [self.listOfItems objectAtIndex:indexPathForDateInCollectionView];
-    
-    self.selectedDate = day.associatedDate;
+    focusedIndexPath = [NSIndexPath indexPathForItem:indexPath.section inSection:0];
     [self scrollToDay];
-    
 }
 
 - (void)didReceiveMemoryWarning {
