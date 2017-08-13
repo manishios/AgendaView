@@ -7,6 +7,8 @@
 //
 
 #import "ViewController.h"
+#import "CalendarUtils.h"
+
 typedef enum : NSUInteger {
     Sunday = 1,
     Monday,
@@ -33,10 +35,10 @@ typedef enum : NSUInteger {
 } MonthName;
 
 @interface CalendarDay : NSObject
-@property (readwrite) NSString *displayDate;
-@property (readwrite) NSArray *eventsOnDate;
+@property (nonatomic, strong, readwrite) NSString *displayDate;
+@property (nonatomic, strong, readwrite) NSArray *eventsOnDate;
 @property (readwrite) BOOL isDateSelected;
-@property (readwrite) NSDate *associatedDate;
+@property (nonatomic, strong, readwrite) NSDate *associatedDate;
 @end
 
 @implementation CalendarDay
@@ -78,13 +80,13 @@ typedef enum : NSUInteger {
     
     if (calendarDay.isDateSelected) {
         layer.backgroundColor = [[UIColor blueColor] CGColor];
-        layer.cornerRadius = self.contentView.frame.size.width/2;
+//        layer.cornerRadius = self.contentView.frame.size.width/2;
         _dateText.textColor = [UIColor whiteColor];
-        _dateText.font = [UIFont boldSystemFontOfSize:selectedDateFontSize];
+//        _dateText.font = [UIFont boldSystemFontOfSize:selectedDateFontSize];
     } else {
         layer.backgroundColor = [[UIColor clearColor] CGColor];
         _dateText.textColor = [UIColor darkTextColor];
-        _dateText.font = [UIFont systemFontOfSize:deselectedDateFontSize];
+//        _dateText.font = [UIFont systemFontOfSize:deselectedDateFontSize];
     }
     
     [self layoutIfNeeded];
@@ -128,7 +130,7 @@ typedef enum : NSUInteger {
     CALayer *layer = self.contentView.layer;
     
     if (calendarDay.displayDate.integerValue == 1) {
-        NSDateComponents *componentsFromCalendarDay = [[NSCalendar currentCalendar] components:NSCalendarUnitMonth | NSCalendarUnitYear fromDate:calendarDay.associatedDate];
+        NSDateComponents *componentsFromCalendarDay = [[CalendarUtils calendar] components:NSCalendarUnitMonth | NSCalendarUnitYear fromDate:calendarDay.associatedDate];
         
         NSString *monthText = [NSString stringWithFormat:@"%@", [self shortSymbolForMonth:(int)[componentsFromCalendarDay month]]];
         
@@ -141,7 +143,7 @@ typedef enum : NSUInteger {
     
     if (calendarDay.isDateSelected) {
         layer.backgroundColor = [[UIColor blueColor] CGColor];
-        layer.cornerRadius = self.contentView.frame.size.width/2;
+//        layer.cornerRadius = self.contentView.frame.size.width/2;
         super.dateText.textColor = [UIColor whiteColor];
         super.dateText.font = [UIFont boldSystemFontOfSize:selectedDateFontSize];
         _monthName.textColor = [UIColor whiteColor];
@@ -216,7 +218,7 @@ typedef enum : NSUInteger {
 
 @end
 
-@interface ViewController () <UICollectionViewDelegate, UICollectionViewDataSource, UIScrollViewDelegate, UITableViewDelegate, UITableViewDataSource>
+@interface ViewController () <UICollectionViewDelegate, UICollectionViewDataSource, UIScrollViewDelegate, UITableViewDelegate, UITableViewDataSource, UICollectionViewDelegateFlowLayout>
 
 {
     CGFloat startYCoordinateForView ;
@@ -225,6 +227,7 @@ typedef enum : NSUInteger {
     CGFloat totalWidth;
     CGFloat widthForOneDay;
     BOOL isExpanded;
+    NSIndexPath *focusedIndexPath;
 }
 
 @property (nonatomic) UITableView *tableView;
@@ -233,6 +236,8 @@ typedef enum : NSUInteger {
 @property (nonatomic) NSMutableArray <CalendarDay *> *listOfItems;
 @property (nonatomic) NSIndexPath *previouslySelectedIndexPath;
 @property (nonatomic) UITableView *eventsListView;
+@property (nonatomic) NSInteger daysInWeek;
+@property (strong, readwrite, nonatomic) NSDate *selectedDate;
 @end
 
 @implementation ViewController
@@ -359,7 +364,7 @@ typedef enum : NSUInteger {
     NSDate *fromDate;
     NSDate *toDate;
     
-    NSCalendar *calendar = [NSCalendar currentCalendar];
+    NSCalendar *calendar = [CalendarUtils calendar];
     
     [calendar rangeOfUnit:NSCalendarUnitDay startDate:&fromDate
                  interval:NULL forDate:fromDateTime];
@@ -378,7 +383,7 @@ typedef enum : NSUInteger {
         _listOfItems = [NSMutableArray new];
     }
     
-    NSCalendar *gregorian = [NSCalendar currentCalendar];
+    NSCalendar *gregorian = [CalendarUtils calendar];
     
     NSDate *firstDate = [NSDate dateWithTimeIntervalSince1970:1262476800]; // Epoch time is 3rd Jan 2010. 1262476800 is the time interval since 1970
     NSDate *endDate = [NSDate dateWithTimeIntervalSince1970:1578700800]; // Epoch time is 11th Jan 2020. 1578700800 is the time interval since 1970
@@ -405,7 +410,9 @@ typedef enum : NSUInteger {
     
     NSDateComponents* deltaComps = [NSDateComponents new];
     
-    
+    NSDate *dateToday = [NSDate date];
+    NSDateComponents *componentsForDay = [gregorian components:NSCalendarUnitMonth | NSCalendarUnitDay | NSCalendarUnitYear fromDate:dateToday];
+
     for (NSInteger index = componentsForFirstDate.day; index <= daysBetweenDates; index++) {
         
         CalendarDay *calendarDay = [CalendarDay new];
@@ -422,13 +429,16 @@ typedef enum : NSUInteger {
         NSDateComponents *components = [gregorian components:NSCalendarUnitDay fromDate:associatedDate];
         calendarDay.displayDate = [NSString stringWithFormat:@"%ld", components.day];
         
+        if ([componentsForDay.date isEqualToDate:calendarDay.associatedDate]) {
+            focusedIndexPath = [NSIndexPath indexPathForItem:(index - componentsForFirstDate.day) inSection:0];
+        }
+        
+        
         [self.listOfItems addObject:calendarDay];
     }
 }
 
 - (void)initiateCalendarView {
-    
-    [self populateDataSource];
     
     UICollectionViewFlowLayout *flowLayout=[[UICollectionViewFlowLayout alloc] init];
     
@@ -460,16 +470,14 @@ typedef enum : NSUInteger {
 {
     // You will get here when the reloadData finished
     for (CalendarDay *day in _listOfItems) {
-        if ([day.associatedDate isEqual:[NSDate date]]) {
+        if ([CalendarUtils isDate1:day.associatedDate theSameDayAs:self.selectedDate]) {
             
-//            NSIndexPath
+//            NSIndexPath *indexpath = [NSIndexPath indexPathForItem:0 inSection:0];
 //            [UIView animateWithDuration:0.1 animations:^{
-//                [_collectionView scrollToItemAtIndexPath:indexPath atScrollPosition:UICollectionViewScrollPositionCenteredVertically animated:YES];
+//                [_collectionView scrollToItemAtIndexPath:indexpath atScrollPosition:UICollectionViewScrollPositionCenteredVertically animated:YES];
 //            }completion:^(BOOL finished){
-//                [_collectionView selectItemAtIndexPath:indexPath animated:YES scrollPosition:UICollectionViewScrollPositionCenteredVertically];
+//                [_collectionView selectItemAtIndexPath:indexpath animated:YES scrollPosition:UICollectionViewScrollPositionCenteredVertically];
 //            }];
-            
-            
         }
     }
 }
@@ -494,7 +502,7 @@ typedef enum : NSUInteger {
     
     NSInteger weekDay2 = [gregorianCalendar component:NSCalendarUnitWeekdayOrdinal fromDate:today];
     
-    NSCalendar *currentCalendar = [NSCalendar currentCalendar];
+    NSCalendar *currentCalendar = [CalendarUtils calendar];
     NSDateComponents *components = [currentCalendar components:NSCalendarUnitDay | NSCalendarUnitMonth | NSCalendarUnitYear fromDate:today];
     
 //    _listOfItems = [NSMutableArray new];
@@ -528,14 +536,32 @@ typedef enum : NSUInteger {
     [self.view addSubview:_tableView];
 }
 
+- (void)contentSizeForInifinteCollectionView {
+    CGSize sizeOfOneItem = [self collectionView:self.collectionView
+                                            layout:self.collectionView.collectionViewLayout
+                            sizeForItemAtIndexPath:[NSIndexPath indexPathForItem:0 inSection:0]];
+    
+    CGFloat heightForOneItem = sizeOfOneItem.height;
+    
+    CGFloat totalHeightRequired = _listOfItems.count * heightForOneItem;
+    
+    self.collectionView.contentSize = CGSizeMake(self.view.frame.size.width, totalHeightRequired);
+}
+
 - (void)viewDidLoad {
     [super viewDidLoad];
     
+    self.daysInWeek = 7;
+
     startYCoordinateForView = 64;
     heightOfView = 40;
     startXCoordinateForView = CGFLOAT_MIN;
     totalWidth = self.view.bounds.size.width;
-    widthForOneDay = totalWidth/7;
+    widthForOneDay = totalWidth/self.daysInWeek;
+
+    [self populateDataSource];
+
+    self.selectedDate = [(CalendarDay *)[_listOfItems objectAtIndex:0] associatedDate];
     
     // Initiate the calendar header view
     [self initiateHeaderView];
@@ -547,7 +573,7 @@ typedef enum : NSUInteger {
     [self initiateEventListView];
     
     // set up calendar
-    [self initiateCurrentMonthOnLaunch];
+//    [self initiateCurrentMonthOnLaunch];
     
 //    [self createToggleViewBarButton];
 }
@@ -579,6 +605,45 @@ typedef enum : NSUInteger {
 }
 
 #pragma mark - Custom Collection data source
+- (CGSize)collectionView:(UICollectionView *)collectionView
+                  layout:(UICollectionViewLayout*)collectionViewLayout
+  sizeForItemAtIndexPath:(NSIndexPath *)indexPath {
+    
+    CGFloat width      = self.view.bounds.size.width;
+    CGFloat itemWidth  = roundf(width / self.daysInWeek);
+    CGFloat itemHeight = indexPath.item < self.daysInWeek ? 30.f : itemWidth;
+    
+    NSUInteger weekday = indexPath.item % self.daysInWeek;
+    
+    if (weekday == self.daysInWeek - 1) {
+        itemWidth = width - (itemWidth * (self.daysInWeek - 1));
+    }
+    
+    return CGSizeMake(itemWidth, itemHeight);
+}
+- (BOOL)collectionView:(UICollectionView *)collectionView canFocusItemAtIndexPath:(NSIndexPath *)indexPath {
+    return YES;
+}
+
+- (BOOL)collectionView:(UICollectionView *)collectionView shouldUpdateFocusInContext:(UICollectionViewFocusUpdateContext *)context NS_AVAILABLE_IOS(9_0) {
+    return YES;
+}
+- (void)collectionView:(UICollectionView *)collectionView didUpdateFocusInContext:(UICollectionViewFocusUpdateContext *)context withAnimationCoordinator:(UIFocusAnimationCoordinator *)coordinator NS_AVAILABLE_IOS(9_0) {
+    NSLog(@"");
+}
+- (nullable NSIndexPath *)indexPathForPreferredFocusedViewInCollectionView:(UICollectionView *)collectionView NS_AVAILABLE_IOS(9_0){
+    return focusedIndexPath;
+}
+
+- (NSIndexPath *)collectionView:(UICollectionView *)collectionView targetIndexPathForMoveFromItemAtIndexPath:(NSIndexPath *)originalIndexPath toProposedIndexPath:(NSIndexPath *)proposedIndexPath NS_AVAILABLE_IOS(9_0) {
+    return focusedIndexPath;
+}
+
+//- (CGPoint)collectionView:(UICollectionView *)collectionView targetContentOffsetForProposedContentOffset:(CGPoint)proposedContentOffset NS_AVAILABLE_IOS(9_0) {
+//    
+// return focusedIndexPath.
+//}// customize the content offset to be applied during transition or update animations
+
 - (void)addDaysToDataSourceAfterMonth:(int)currentMonth {
     
 }
@@ -597,6 +662,18 @@ typedef enum : NSUInteger {
     return YES;
 }
 
+- (void)scrollToDay
+{
+    UICollectionViewFlowLayout *layout = (UICollectionViewFlowLayout *) _collectionView.collectionViewLayout;
+    
+    CalendarDay *start = [_listOfItems objectAtIndex:0];
+    
+    NSInteger row = [CalendarUtils numberOfDaysFrom:start.associatedDate To:self.selectedDate];
+    row = row - row % 7;
+    
+    _collectionView.contentOffset = CGPointMake(row * layout.itemSize.width, 0);
+}
+
 #define OddColor [UIColor clearColor]
 #define EvenColor [UIColor groupTableViewBackgroundColor]
 
@@ -605,7 +682,7 @@ typedef enum : NSUInteger {
 {
     CalendarDay *calendarDay = _listOfItems[indexPath.row];
     
-    NSDateComponents *componentsFromCalendarDay = [[NSCalendar currentCalendar] components:NSCalendarUnitMonth | NSCalendarUnitDay fromDate:calendarDay.associatedDate];
+    NSDateComponents *componentsFromCalendarDay = [[CalendarUtils calendar] components:NSCalendarUnitMonth | NSCalendarUnitDay fromDate:calendarDay.associatedDate];
     
     if(componentsFromCalendarDay.day == 1) {
         CalendarViewCell *cellWithMonth = [collectionView dequeueReusableCellWithReuseIdentifier:@"CellIdentifierForCellWithMonth" forIndexPath:indexPath];
@@ -627,14 +704,13 @@ typedef enum : NSUInteger {
         cell.backgroundColor = OddColor;
     }
     [cell updateWithModel:calendarDay];
+    
+    if (self.selectedDate) {
+        [cell setSelected:[CalendarUtils isDate1:calendarDay.associatedDate theSameDayAs:self.selectedDate]];
+    }
 
     return cell;
 }
-
-//- (CGSize)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout*)collectionViewLayout sizeForItemAtIndexPath:(NSIndexPath *)indexPath
-//{
-//    return CGSizeMake(widthForOneDay, widthForOneDay);
-//}
 
 - (void)collectionView:(UICollectionView *)collectionView didSelectItemAtIndexPath:(NSIndexPath *)indexPath {
     
@@ -662,7 +738,7 @@ typedef enum : NSUInteger {
 }
 
 - (void)setHeaderTextForDay:(CalendarDay *)calendarDay {
-    NSDateComponents *componentsFromCalendarDay = [[NSCalendar currentCalendar] components:NSCalendarUnitMonth | NSCalendarUnitYear fromDate:calendarDay.associatedDate];
+    NSDateComponents *componentsFromCalendarDay = [[CalendarUtils calendar] components:NSCalendarUnitMonth | NSCalendarUnitYear fromDate:calendarDay.associatedDate];
     self.title = [NSString stringWithFormat:@"%@ %ld", [self symbolForMonth:(int)[componentsFromCalendarDay month]], [componentsFromCalendarDay year]];
 }
 
@@ -675,35 +751,6 @@ typedef enum : NSUInteger {
     if (scrollView.tag == 1002 && [scrollView isKindOfClass:[UITableView class]]) {
         NSLog(@"TableView");
     }
-}
-
-- (void)scrollViewDidEndDecelerating:(UIScrollView *)scrollView {
-//    
-//    if (scrollView.tag == 1001 && [scrollView isKindOfClass:[UICollectionView class]]) {
-//        NSLog(@"Collection");
-//    }
-//    if (scrollView.tag == 1002 && [scrollView isKindOfClass:[UITableView class]]) {
-//        NSLog(@"TableView");
-//        
-//        NSArray *visibleCellsFromEventsView = [_tableView visibleCells];
-//        UITableViewCell *topMostCell = [visibleCellsFromEventsView objectAtIndex:0];
-//        NSIndexPath *indexPathOfTopMostCell = [_tableView indexPathForCell:topMostCell];
-//        
-//        NSIndexPath *pathForItemInCalendarView = [NSIndexPath indexPathForItem:indexPathOfTopMostCell.section inSection:0];
-//        
-//        CalendarViewCell *cell = (CalendarViewCell *)[_collectionView cellForItemAtIndexPath:pathForItemInCalendarView];
-//        if (cell) {
-//            NSLog(@"Text in scrolled collection cell %@", cell.dateText.text);
-//        }
-//        
-//        [_collectionView scrollToItemAtIndexPath:pathForItemInCalendarView
-//                                atScrollPosition:UICollectionViewScrollPositionCenteredVertically
-//                                        animated:YES];
-//        
-//        [_collectionView selectItemAtIndexPath:pathForItemInCalendarView
-//                                      animated:YES
-//                                scrollPosition:UICollectionViewScrollPositionCenteredVertically];
-//    }
 }
 
 - (void)scrollViewDidEndDragging:(UIScrollView *)scrollView willDecelerate:(BOOL)decelerate {
@@ -769,27 +816,23 @@ typedef enum : NSUInteger {
 - (NSString *)tableView:(UITableView *)tableView titleForHeaderInSection:(NSInteger)section {
     CalendarDay *day = [_listOfItems objectAtIndex:section];
     
-    return day.displayDate;
+    NSDateComponents *components = [[CalendarUtils calendar] components:NSCalendarUnitDay | NSCalendarUnitMonth | NSCalendarUnitYear fromDate:day.associatedDate];
+    
+    NSString *messageToDisplay = [NSString stringWithFormat:@"%@, %d %@ %ld", [self symbolForDay:(int)[components weekday]], (int)[components day], [self symbolForMonth:(int)[components month]], [components year]];
+    
+    return messageToDisplay;
 }
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
     
     NSInteger indexPathForDateInCollectionView = indexPath.section;
     
-    NSIndexPath *indexPathForItemInDateCollection = [NSIndexPath indexPathForItem:indexPathForDateInCollectionView inSection:0];
+    CalendarDay *day = [self.listOfItems objectAtIndex:indexPathForDateInCollectionView];
     
-    [_collectionView selectItemAtIndexPath:indexPathForItemInDateCollection
-                                  animated:YES
-                            scrollPosition:UICollectionViewScrollPositionTop];
-    
-//    [_collectionView scrollToItemAtIndexPath:[NSIndexPath indexPathForItem:indexPathForDateInCollectionView inSection:0] atScrollPosition:UICollectionViewScrollPositionTop animated:YES];
+    self.selectedDate = day.associatedDate;
+    [self scrollToDay];
     
 }
-//- (UIView *)tableView:(UITableView *)tableView viewForHeaderInSection:(NSInteger)section {
-//    
-//    UITableViewHeaderFooterView *headerView = [UITableViewHeaderFooterView new];
-//    
-//}
 
 - (void)didReceiveMemoryWarning {
     [super didReceiveMemoryWarning];
