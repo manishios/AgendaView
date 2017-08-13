@@ -11,6 +11,8 @@
 #import "MonthUtil.h"
 #import "WeekdayUtil.h"
 
+#define RegularTextColor [UIColor lightGrayColor]
+
 @interface CalendarDay : NSObject
 @property (nonatomic, strong, readwrite) NSString *displayDate;
 @property (nonatomic, strong, readwrite) NSArray *eventsOnDate;
@@ -36,6 +38,7 @@
         self.dateText = [[UILabel alloc] initWithFrame:self.contentView.frame];
         
         _dateText.textAlignment = NSTextAlignmentCenter;
+        _dateText.textColor = RegularTextColor;
         [self.contentView addSubview:_dateText];
     }
     
@@ -53,7 +56,7 @@
         _dateText.textColor = [UIColor whiteColor];
     } else {
         layer.backgroundColor = [[UIColor clearColor] CGColor];
-        _dateText.textColor = [UIColor darkTextColor];
+        _dateText.textColor = RegularTextColor;
     }
     
     [self layoutIfNeeded];
@@ -75,12 +78,13 @@
     
     if (self) {
         self.dateText = [[UILabel alloc] initWithFrame:self.contentView.frame];
-        
+        _dateText.textColor = RegularTextColor;
         self.dateText.textAlignment = NSTextAlignmentCenter;
         [self.contentView addSubview:self.dateText];
         
-        self.monthName = [[UILabel alloc] initWithFrame:CGRectZero];
+        _monthName = [[UILabel alloc] initWithFrame:CGRectZero];
         _monthName.textAlignment = NSTextAlignmentCenter;
+        _monthName.textColor = RegularTextColor;
         [self.contentView addSubview:_monthName];
     }
     
@@ -112,8 +116,8 @@
     
     } else {
         layer.backgroundColor = [[UIColor clearColor] CGColor];
-        self.dateText.textColor = [UIColor darkTextColor];
-        _monthName.textColor = [UIColor darkTextColor];
+        self.dateText.textColor = RegularTextColor;
+        _monthName.textColor = RegularTextColor;
     }
     
     [self layoutIfNeeded];
@@ -150,7 +154,7 @@
 
     _dayHeaderView = [[UIView alloc] initWithFrame:CGRectMake(startXCoordinateForView, startYCoordinateForView, self.view.bounds.size.width, heightOfView)];
     [_dayHeaderView setAutoresizingMask:UIViewAutoresizingFlexibleWidth];
-    _dayHeaderView.backgroundColor = [UIColor grayColor];
+//    _dayHeaderView.backgroundColor = [UIColor grayColor];
     
     for (int index=0; index<self.daysInWeek; index++) {
         
@@ -158,7 +162,7 @@
         
         dayView.text = [WeekdayUtil shortSymbolForDay:(index+1)];
         dayView.textAlignment = NSTextAlignmentCenter;
-        dayView.textColor = [UIColor whiteColor];
+        dayView.textColor = RegularTextColor;
         
         [_dayHeaderView addSubview:dayView];
         
@@ -248,7 +252,10 @@
     
     [flowLayout setItemSize:CGSizeMake(widthForOneDay, widthForOneDay)];
     [flowLayout setSectionInset:UIEdgeInsetsMake(0, 0, 0, 0)];
-
+    [flowLayout setMinimumInteritemSpacing:CGFLOAT_MIN];
+    [flowLayout setMinimumLineSpacing:CGFLOAT_MIN];
+    [flowLayout setScrollDirection:UICollectionViewScrollDirectionVertical];
+    
     startYCoordinateForView = self.dayHeaderView.frame.origin.y + self.dayHeaderView.frame.size.height;
     heightOfView = (self.view.frame.size.height - startYCoordinateForView)/2;
     startXCoordinateForView = CGFLOAT_MIN;
@@ -301,7 +308,7 @@
     startYCoordinateForView = 64;
     heightOfView = 40;
     startXCoordinateForView = CGFLOAT_MIN;
-    totalWidth = self.view.bounds.size.width;
+    totalWidth = self.view.frame.size.width;
     widthForOneDay = totalWidth/self.daysInWeek;
 
     [self populateDataSource];
@@ -467,20 +474,21 @@
         UITableViewCell *topMostCell = [visibleCellsFromEventsView objectAtIndex:0];
         NSIndexPath *indexPathOfTopMostCell = [_tableView indexPathForCell:topMostCell];
         
-        NSIndexPath *pathForItemInCalendarView = [NSIndexPath indexPathForItem:indexPathOfTopMostCell.section inSection:0];
+        focusedIndexPath = [NSIndexPath indexPathForItem:indexPathOfTopMostCell.section inSection:0];
+//        
+//        CalendarViewCell *cell = (CalendarViewCell *)[_collectionView cellForItemAtIndexPath:pathForItemInCalendarView];
+//        if (cell) {
+//            NSLog(@"Text in scrolled collection cell %@", cell.dateText.text);
+//        }
         
-        CalendarViewCell *cell = (CalendarViewCell *)[_collectionView cellForItemAtIndexPath:pathForItemInCalendarView];
-        if (cell) {
-            NSLog(@"Text in scrolled collection cell %@", cell.dateText.text);
-        }
-        
-        [_collectionView scrollToItemAtIndexPath:pathForItemInCalendarView
-                                atScrollPosition:UICollectionViewScrollPositionCenteredVertically
-                                        animated:YES];
-        
-        [_collectionView selectItemAtIndexPath:pathForItemInCalendarView
-                                      animated:YES
-                                scrollPosition:UICollectionViewScrollPositionCenteredVertically];
+        [self scrollToDay];
+//        [_collectionView scrollToItemAtIndexPath:pathForItemInCalendarView
+//                                atScrollPosition:UICollectionViewScrollPositionCenteredVertically
+//                                        animated:YES];
+//        
+//        [_collectionView selectItemAtIndexPath:pathForItemInCalendarView
+//                                      animated:YES
+//                                scrollPosition:UICollectionViewScrollPositionCenteredVertically];
     }
 }
 
@@ -506,16 +514,18 @@
     
     CalendarDay *day = [_listOfItems objectAtIndex:indexPath.section];
     
-    if (day.eventsOnDate.count) {
-        cell.textLabel.text = @"None";
+    if (day.eventsOnDate && day.eventsOnDate.count) {
+        cell.textLabel.text = @"Some event";
     } else {
-        cell.textLabel.text = @"An event";
+        cell.textLabel.text = @"No Event";
     }
+    
+    cell.textLabel.textColor = RegularTextColor;
     
     return cell;
 }
 
-- (NSString *)tableView:(UITableView *)tableView titleForHeaderInSection:(NSInteger)section {
+- (NSString *) titleForHeaderInSection:(NSInteger)section {
     CalendarDay *day = [_listOfItems objectAtIndex:section];
     
     NSDateComponents *components = [[CalendarUtils calendar] components:NSCalendarUnitWeekday | NSCalendarUnitDay | NSCalendarUnitMonth | NSCalendarUnitYear fromDate:day.associatedDate];
@@ -529,6 +539,22 @@
     
     focusedIndexPath = [NSIndexPath indexPathForItem:indexPath.section inSection:0];
     [self scrollToDay];
+}
+
+- (CGFloat)tableView:(UITableView *)tableView heightForHeaderInSection:(NSInteger)section {
+    return 30;
+}
+
+- (UIView *)tableView:(UITableView *)tableView viewForHeaderInSection:(NSInteger)section {
+    
+    UITableViewHeaderFooterView *headerView = [[UITableViewHeaderFooterView alloc] init];
+    UILabel *headerLabel = [[UILabel alloc] initWithFrame:CGRectMake(10, 0, totalWidth-20, 30)];
+    headerLabel.textColor = RegularTextColor;
+    headerLabel.font = [UIFont systemFontOfSize:14];
+    headerLabel.text = [self titleForHeaderInSection:section];
+    [headerView addSubview:headerLabel];
+    
+    return headerView;
 }
 
 - (void)didReceiveMemoryWarning {
