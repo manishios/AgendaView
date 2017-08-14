@@ -10,120 +10,11 @@
 #import "CalendarUtils.h"
 #import "MonthUtil.h"
 #import "WeekdayUtil.h"
-
-#define RegularTextColor [UIColor lightGrayColor]
-
-@interface CalendarDay : NSObject
-@property (nonatomic, strong, readwrite) NSString *displayDate;
-@property (nonatomic, strong, readwrite) NSArray *eventsOnDate;
-@property (readwrite) BOOL isDateSelected;
-@property (nonatomic, strong, readwrite) NSDate *associatedDate;
-@end
-
-@implementation CalendarDay
-
-@end
-
-@interface CalendarViewCell : UICollectionViewCell
-@property (nonatomic) UILabel *dateText;
-@end
-
-@implementation CalendarViewCell
-
-- (instancetype)initWithFrame:(CGRect)frame {
-    
-    self = [super initWithFrame:frame];
-    
-    if (self) {
-        self.dateText = [[UILabel alloc] initWithFrame:self.contentView.frame];
-        
-        _dateText.textAlignment = NSTextAlignmentCenter;
-        _dateText.textColor = RegularTextColor;
-        [self.contentView addSubview:_dateText];
-    }
-    
-    return self;
-}
-
-- (void)updateWithModel:(CalendarDay *)calendarDay {
-    
-    self.dateText.text = calendarDay.displayDate;
-
-    CALayer *layer = self.contentView.layer;
-    
-    if (calendarDay.isDateSelected) {
-        layer.backgroundColor = [[UIColor blueColor] CGColor];
-        _dateText.textColor = [UIColor whiteColor];
-    } else {
-        layer.backgroundColor = [[UIColor clearColor] CGColor];
-        _dateText.textColor = RegularTextColor;
-    }
-    
-    [self layoutIfNeeded];
-}
-
-
-@end
-
-@interface CalendarViewCellWithMonth : UICollectionViewCell
-@property (nonatomic) UILabel *dateText;
-@property (nonatomic) UILabel *monthName;
-@end
-
-@implementation CalendarViewCellWithMonth
-
-- (instancetype)initWithFrame:(CGRect)frame {
-    
-    self = [super initWithFrame:frame];
-    
-    if (self) {
-        self.dateText = [[UILabel alloc] initWithFrame:self.contentView.frame];
-        _dateText.textColor = RegularTextColor;
-        self.dateText.textAlignment = NSTextAlignmentCenter;
-        [self.contentView addSubview:self.dateText];
-        
-        _monthName = [[UILabel alloc] initWithFrame:CGRectZero];
-        _monthName.textAlignment = NSTextAlignmentCenter;
-        _monthName.textColor = RegularTextColor;
-        [self.contentView addSubview:_monthName];
-    }
-    
-    return self;
-}
-
-- (void)updateWithModel:(CalendarDay *)calendarDay {
-    
-    self.dateText.text = calendarDay.displayDate;
-    
-    CALayer *layer = self.contentView.layer;
-    
-    if (calendarDay.displayDate.integerValue == 1) {
-        NSDateComponents *componentsFromCalendarDay = [[CalendarUtils calendar] components:NSCalendarUnitMonth | NSCalendarUnitYear fromDate:calendarDay.associatedDate];
-        
-        NSString *monthText = [NSString stringWithFormat:@"%@", [MonthUtil shortSymbolForMonth:(int)[componentsFromCalendarDay month]]];
-        
-        self.dateText.frame = CGRectMake(0, 0, self.contentView.frame.size.width, self.contentView.frame.size.height/2);
-        [self.monthName setFrame:CGRectMake(0, self.contentView.frame.size.height/2, self.contentView.frame.size.width, self.contentView.frame.size.height/2)];
-        self.monthName.text = monthText;
-    } else {
-        _monthName.hidden = YES;
-    }
-    
-    if (calendarDay.isDateSelected) {
-        layer.backgroundColor = [[UIColor blueColor] CGColor];
-        self.dateText.textColor = [UIColor whiteColor];
-        _monthName.textColor = [UIColor whiteColor];
-    
-    } else {
-        layer.backgroundColor = [[UIColor clearColor] CGColor];
-        self.dateText.textColor = RegularTextColor;
-        _monthName.textColor = RegularTextColor;
-    }
-    
-    [self layoutIfNeeded];
-}
-
-@end
+#import "CalendarDay.h"
+#import "CalendarEvent.h"
+#import "CalendarViewCellWithMonth.h"
+#import "CalendarViewCell.h"
+#import "Constants.h"
 
 @interface ViewController () <UICollectionViewDelegate, UICollectionViewDataSource, UIScrollViewDelegate, UITableViewDelegate, UITableViewDataSource, UICollectionViewDelegateFlowLayout>
 
@@ -145,6 +36,7 @@
 @property (nonatomic) UITableView *eventsListView;
 @property (nonatomic) NSInteger daysInWeek;
 @property (strong, readwrite, nonatomic) NSDate *selectedDate;
+@property (strong, readwrite, nonatomic) NSArray *eventList;
 @end
 
 @implementation ViewController
@@ -154,7 +46,6 @@
 
     _dayHeaderView = [[UIView alloc] initWithFrame:CGRectMake(startXCoordinateForView, startYCoordinateForView, self.view.bounds.size.width, heightOfView)];
     [_dayHeaderView setAutoresizingMask:UIViewAutoresizingFlexibleWidth];
-//    _dayHeaderView.backgroundColor = [UIColor grayColor];
     
     for (int index=0; index<self.daysInWeek; index++) {
         
@@ -190,6 +81,8 @@
 }
 
 - (void)populateDataSource {
+    
+    [self doSomethingWithTheJson];
     
     if (!self.listOfItems) {
         _listOfItems = [NSMutableArray new];
@@ -242,8 +135,39 @@
             focusedIndexPath = [NSIndexPath indexPathForItem:(index - componentsForFirstDate.day) inSection:0];
         }
         
+        if(index % 2) {
+            calendarDay.eventsOnDate = self.eventList;
+        }
+        
         [self.listOfItems addObject:calendarDay];
     }
+}
+
+- (void)doSomethingWithTheJson
+{
+    NSDictionary *dict = [self JSONFromFile];
+    
+    NSArray *events = [dict objectForKey:@"events"];
+    
+    NSMutableArray *listOfEvents = [NSMutableArray new];
+    
+    for (NSDictionary *event in events) {
+        
+        CalendarEvent *cEvent = [CalendarEvent createEventFromInfo:event];
+        [listOfEvents addObject:cEvent];
+
+        NSLog(@"");
+        
+    }
+    
+    self.eventList = [NSArray arrayWithArray:listOfEvents];
+}
+
+- (NSDictionary *)JSONFromFile
+{
+    NSString *path = [[NSBundle mainBundle] pathForResource:@"events" ofType:@"json"];
+    NSData *data = [NSData dataWithContentsOfFile:path];
+    return [NSJSONSerialization JSONObjectWithData:data options:kNilOptions error:nil];
 }
 
 - (void)initiateCalendarView {
@@ -475,20 +399,8 @@
         NSIndexPath *indexPathOfTopMostCell = [_tableView indexPathForCell:topMostCell];
         
         focusedIndexPath = [NSIndexPath indexPathForItem:indexPathOfTopMostCell.section inSection:0];
-//        
-//        CalendarViewCell *cell = (CalendarViewCell *)[_collectionView cellForItemAtIndexPath:pathForItemInCalendarView];
-//        if (cell) {
-//            NSLog(@"Text in scrolled collection cell %@", cell.dateText.text);
-//        }
         
         [self scrollToDay];
-//        [_collectionView scrollToItemAtIndexPath:pathForItemInCalendarView
-//                                atScrollPosition:UICollectionViewScrollPositionCenteredVertically
-//                                        animated:YES];
-//        
-//        [_collectionView selectItemAtIndexPath:pathForItemInCalendarView
-//                                      animated:YES
-//                                scrollPosition:UICollectionViewScrollPositionCenteredVertically];
     }
 }
 
@@ -515,7 +427,12 @@
     CalendarDay *day = [_listOfItems objectAtIndex:indexPath.section];
     
     if (day.eventsOnDate && day.eventsOnDate.count) {
-        cell.textLabel.text = @"Some event";
+        
+        if (day.eventsOnDate[indexPath.row]) {
+            CalendarEvent *event = [day.eventsOnDate objectAtIndex:indexPath.row];
+            cell.textLabel.text = event.meetingTitle;
+        }
+        
     } else {
         cell.textLabel.text = @"No Event";
     }
