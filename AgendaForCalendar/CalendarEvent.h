@@ -12,9 +12,11 @@
 
 @property (nonatomic, strong) NSString *startTime;
 @property (nonatomic, strong) NSString *endTime;
+@property (nonatomic, strong) NSString *duration;
 @property (nonatomic) long meetingId;
 @property (nonatomic, strong) NSString *meetingTitle;
 @property (nonatomic) BOOL isAllDay;
+@property (nonatomic) BOOL isSkype;
 
 + (CalendarEvent *)createEventFromInfo:(NSDictionary *)eventInfo;
 @end

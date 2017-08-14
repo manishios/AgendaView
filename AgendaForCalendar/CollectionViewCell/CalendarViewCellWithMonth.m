@@ -11,6 +11,11 @@
 #import "MonthUtil.h"
 #import "Constants.h"
 
+@interface CalendarViewCellWithMonth()
+@property (nonatomic) UILabel *dateText;
+@property (nonatomic) UILabel *monthName;
+@end
+
 @implementation CalendarViewCellWithMonth
 - (instancetype)initWithFrame:(CGRect)frame {
     

@@ -10,4 +10,9 @@
 #define Constants_h
 
 #define RegularTextColor [UIColor lightGrayColor]
+#define SmallFontSize 13
+#define MediumFontSize 14
+#define LargeFontSize 15
+#define Padding 10
+
 #endif /* Constants_h */

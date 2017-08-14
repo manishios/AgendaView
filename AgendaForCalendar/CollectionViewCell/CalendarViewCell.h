@@ -10,7 +10,6 @@
 #import "CalendarDay.h"
 
 @interface CalendarViewCell : UICollectionViewCell
-@property (nonatomic) UILabel *dateText;
 
 - (void)updateWithModel:(CalendarDay *)calendarDay;
 @end

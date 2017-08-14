@@ -16,7 +16,7 @@
 		673FDD381F41855A00D679E2 /* CalendarDay.m in Sources */ = {isa = PBXBuildFile; fileRef = 673FDD371F41855A00D679E2 /* CalendarDay.m */; };
 		673FDD3B1F4185AB00D679E2 /* CalendarViewCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 673FDD3A1F4185AB00D679E2 /* CalendarViewCell.m */; };
 		673FDD3E1F4185E600D679E2 /* CalendarViewCellWithMonth.m in Sources */ = {isa = PBXBuildFile; fileRef = 673FDD3D1F4185E600D679E2 /* CalendarViewCellWithMonth.m */; };
-		673FDD491F418F0A00D679E2 /* EventCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 673FDD481F418F0A00D679E2 /* EventCell.m */; };
+		673FDD561F41DEDD00D679E2 /* EventCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 673FDD551F41DEDD00D679E2 /* EventCell.m */; };
 		675E0DDC1F320470001EBFE8 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 675E0DDB1F320470001EBFE8 /* main.m */; };
 		675E0DDF1F320470001EBFE8 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 675E0DDE1F320470001EBFE8 /* AppDelegate.m */; };
 		675E0DE21F320470001EBFE8 /* ViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 675E0DE11F320470001EBFE8 /* ViewController.m */; };
@@ -42,8 +42,8 @@
 		673FDD3C1F4185E600D679E2 /* CalendarViewCellWithMonth.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CalendarViewCellWithMonth.h; path = CollectionViewCell/CalendarViewCellWithMonth.h; sourceTree = "<group>"; };
 		673FDD3D1F4185E600D679E2 /* CalendarViewCellWithMonth.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = CalendarViewCellWithMonth.m; path = CollectionViewCell/CalendarViewCellWithMonth.m; sourceTree = "<group>"; };
 		673FDD411F4188E800D679E2 /* Constants.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Constants.h; sourceTree = "<group>"; };
-		673FDD471F418F0A00D679E2 /* EventCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = EventCell.h; path = "Table Cells/EventCell.h"; sourceTree = "<group>"; };
-		673FDD481F418F0A00D679E2 /* EventCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = EventCell.m; path = "Table Cells/EventCell.m"; sourceTree = "<group>"; };
+		673FDD541F41DEDD00D679E2 /* EventCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = EventCell.h; path = "Table Cells/EventCell.h"; sourceTree = "<group>"; };
+		673FDD551F41DEDD00D679E2 /* EventCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = EventCell.m; path = "Table Cells/EventCell.m"; sourceTree = "<group>"; };
 		675E0DD71F320470001EBFE8 /* AgendaForCalendar.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = AgendaForCalendar.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		675E0DDB1F320470001EBFE8 /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
 		675E0DDD1F320470001EBFE8 /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
@@ -118,8 +118,8 @@
 		673FDD461F418EDD00D679E2 /* TabelCells */ = {
 			isa = PBXGroup;
 			children = (
-				673FDD471F418F0A00D679E2 /* EventCell.h */,
-				673FDD481F418F0A00D679E2 /* EventCell.m */,
+				673FDD541F41DEDD00D679E2 /* EventCell.h */,
+				673FDD551F41DEDD00D679E2 /* EventCell.m */,
 			);
 			name = TabelCells;
 			sourceTree = "<group>";
@@ -241,9 +241,9 @@
 				673FDD381F41855A00D679E2 /* CalendarDay.m in Sources */,
 				675E0DE21F320470001EBFE8 /* ViewController.m in Sources */,
 				673FDD2F1F40A4F900D679E2 /* CalendarEvent.m in Sources */,
+				673FDD561F41DEDD00D679E2 /* EventCell.m in Sources */,
 				673FDD3E1F4185E600D679E2 /* CalendarViewCellWithMonth.m in Sources */,
 				673FDD241F3FF25100D679E2 /* CalendarUtils.m in Sources */,
-				673FDD491F418F0A00D679E2 /* EventCell.m in Sources */,
 				673FDD2C1F4063FF00D679E2 /* WeekdayUtil.m in Sources */,
 				675E0DDF1F320470001EBFE8 /* AppDelegate.m in Sources */,
 				673FDD291F40634A00D679E2 /* MonthUtil.m in Sources */,

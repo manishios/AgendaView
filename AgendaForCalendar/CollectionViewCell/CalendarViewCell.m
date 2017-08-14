@@ -9,6 +9,10 @@
 #import "CalendarViewCell.h"
 #import "Constants.h"
 
+@interface CalendarViewCell()
+@property (nonatomic) UILabel *dateText;
+@end
+
 @implementation CalendarViewCell
 - (instancetype)initWithFrame:(CGRect)frame {
     

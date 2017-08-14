@@ -15,6 +15,7 @@
 #import "CalendarViewCellWithMonth.h"
 #import "CalendarViewCell.h"
 #import "Constants.h"
+#import "EventCell.h"
 
 @interface ViewController () <UICollectionViewDelegate, UICollectionViewDataSource, UIScrollViewDelegate, UITableViewDelegate, UITableViewDataSource, UICollectionViewDelegateFlowLayout>
 
@@ -429,15 +430,19 @@
     if (day.eventsOnDate && day.eventsOnDate.count) {
         
         if (day.eventsOnDate[indexPath.row]) {
+            
             CalendarEvent *event = [day.eventsOnDate objectAtIndex:indexPath.row];
-            cell.textLabel.text = event.meetingTitle;
+            
+                EventCell *eventCell = [tableView dequeueReusableCellWithIdentifier:@"EventCell"];
+                
+                if (!eventCell) {
+                    eventCell = [[EventCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:@"EventCell"];
+                }
+                
+                [eventCell updateWithEvent:event];
+                return eventCell;
         }
-        
-    } else {
-        cell.textLabel.text = @"No Event";
     }
-    
-    cell.textLabel.textColor = RegularTextColor;
     
     return cell;
 }
@@ -467,7 +472,7 @@
     UITableViewHeaderFooterView *headerView = [[UITableViewHeaderFooterView alloc] init];
     UILabel *headerLabel = [[UILabel alloc] initWithFrame:CGRectMake(10, 0, totalWidth-20, 30)];
     headerLabel.textColor = RegularTextColor;
-    headerLabel.font = [UIFont systemFontOfSize:14];
+    headerLabel.font = [UIFont systemFontOfSize:MediumFontSize];
     headerLabel.text = [self titleForHeaderInSection:section];
     [headerView addSubview:headerLabel];
     

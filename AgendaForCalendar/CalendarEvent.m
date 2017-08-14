@@ -15,11 +15,12 @@
         CalendarEvent *event = [CalendarEvent new];
         
         event.startTime = eventInfo[@"start"];
+        event.duration = eventInfo[@"duration"];
         event.endTime = eventInfo[@"end"];
         event.meetingId = [eventInfo[@"id"] longValue];
         event.meetingTitle = eventInfo[@"title"];
         event.isAllDay = [eventInfo[@"allDay"] boolValue];
-        
+        event.isSkype = [eventInfo[@"isSkype"] boolValue];
         return event;
     }
     
