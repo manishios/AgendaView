@@ -15,4 +15,6 @@
 #define LargeFontSize 15
 #define Padding 10
 
+#define HeightOfControlForEvent 20
+
 #endif /* Constants_h */

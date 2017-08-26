@@ -16,6 +16,7 @@
 #import "CalendarViewCell.h"
 #import "Constants.h"
 #import "EventCell.h"
+#import "SkypeEventCell.h"
 
 @interface ViewController () <UICollectionViewDelegate, UICollectionViewDataSource, UIScrollViewDelegate, UITableViewDelegate, UITableViewDataSource, UICollectionViewDelegateFlowLayout>
 
@@ -39,6 +40,14 @@
 @property (strong, readwrite, nonatomic) NSDate *selectedDate;
 @property (strong, readwrite, nonatomic) NSArray *eventList;
 @end
+
+// Tags
+#define Tag_CalendarView 1001
+#define Tag_EventView 1002
+
+// Calendar range -- Start and end date in Unix epoch
+#define StartDate_Epoch 1262476800
+#define EndDate_Epoch 1578700800
 
 @implementation ViewController
 
@@ -91,8 +100,8 @@
     
     NSCalendar *gregorian = [CalendarUtils calendar];
     
-    NSDate *firstDate = [NSDate dateWithTimeIntervalSince1970:1262476800]; // Epoch time is 3rd Jan 2010. 1262476800 is the time interval since 1970
-    NSDate *endDate = [NSDate dateWithTimeIntervalSince1970:1578700800]; // Epoch time is 11th Jan 2020. 1578700800 is the time interval since 1970
+    NSDate *firstDate = [NSDate dateWithTimeIntervalSince1970:StartDate_Epoch];
+    NSDate *endDate = [NSDate dateWithTimeIntervalSince1970:EndDate_Epoch];
     
     NSInteger daysBetweenDates = [self daysBetweenDate:firstDate andDate:endDate];
     NSDateComponents *componentsForFirstDate = [gregorian components:NSCalendarUnitMonth | NSCalendarUnitDay | NSCalendarUnitYear fromDate:firstDate];
@@ -176,7 +185,7 @@
     UICollectionViewFlowLayout *flowLayout=[[UICollectionViewFlowLayout alloc] init];
     
     [flowLayout setItemSize:CGSizeMake(widthForOneDay, widthForOneDay)];
-    [flowLayout setSectionInset:UIEdgeInsetsMake(0, 0, 0, 0)];
+    [flowLayout setSectionInset:UIEdgeInsetsZero];
     [flowLayout setMinimumInteritemSpacing:CGFLOAT_MIN];
     [flowLayout setMinimumLineSpacing:CGFLOAT_MIN];
     [flowLayout setScrollDirection:UICollectionViewScrollDirectionVertical];
@@ -186,7 +195,7 @@
     startXCoordinateForView = CGFLOAT_MIN;
     _collectionView = [[UICollectionView alloc] initWithFrame:CGRectMake(startXCoordinateForView, startYCoordinateForView, self.view.bounds.size.width, heightOfView) collectionViewLayout:flowLayout];
     
-    _collectionView.tag = 1001;
+    _collectionView.tag = Tag_CalendarView;
     [_collectionView setDataSource:self];
     [_collectionView setDelegate:self];
     
@@ -207,7 +216,7 @@
     
     _tableView = [[UITableView alloc] initWithFrame:CGRectMake(startXCoordinateForView, startYCoordinateForView, self.view.frame.size.width, heightOfView) style:UITableViewStylePlain];
     
-    _tableView.tag = 1002;
+    _tableView.tag = Tag_EventView;
     _tableView.dataSource = self;
     _tableView.delegate = self;
     [self.view addSubview:_tableView];
@@ -236,6 +245,8 @@
     totalWidth = self.view.frame.size.width;
     widthForOneDay = totalWidth/self.daysInWeek;
 
+    [self createToggleViewBarButton];
+    
     [self populateDataSource];
 
     self.selectedDate = [(CalendarDay *)[_listOfItems objectAtIndex:0] associatedDate];
@@ -248,31 +259,54 @@
     
     // Initiate Event list view
     [self initiateEventListView];
+    
+//    [self toggleAgendaView:nil];
 }
 
 - (void)createToggleViewBarButton {
-    UIBarButtonItem *toggleViewBarButton = [[UIBarButtonItem alloc] initWithTitle:@"Hi" style:UIBarButtonItemStylePlain target:self action:@selector(toggleAgendaView:)];
+    UIBarButtonItem *toggleViewBarButton = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"agenda-view"]
+                                                                            style:UIBarButtonItemStylePlain
+                                                                           target:self
+                                                                           action:@selector(toggleAgendaView:)];
     self.navigationItem.rightBarButtonItem = toggleViewBarButton;
 }
 
+#define Collapsed_Height 150
+
 - (void)toggleAgendaView:(UIBarButtonItem *)button {
+    
+    isExpanded =  !isExpanded;
+    
+    startXCoordinateForView = CGFLOAT_MIN;
+    startYCoordinateForView = _collectionView.frame.origin.y;
+    totalWidth = self.view.frame.size.width;
     
     [UIView animateWithDuration:0.25 animations:^{
         if (isExpanded) {
-            _collectionView.frame = CGRectMake(0, 0, 320, 200);
+            heightOfView = self.view.frame.size.height/2 - startYCoordinateForView;
+            _collectionView.frame = CGRectMake(startXCoordinateForView, startYCoordinateForView, totalWidth, heightOfView);
         } else {
-            _collectionView.frame = CGRectMake(0, 0, 320, 500);
+            _collectionView.frame = CGRectMake(startXCoordinateForView, startYCoordinateForView, totalWidth, Collapsed_Height);
         }
         
-    }completion:^(BOOL finished) {
+        startYCoordinateForView = _collectionView.frame.origin.y + _collectionView.frame.size.height;
+        
         if (isExpanded) {
-            _tableView.frame = CGRectMake(0, 200, 320, 500);
+            
+            heightOfView = self.view.frame.size.height - startYCoordinateForView;
+            
+            _tableView.frame = CGRectMake(startXCoordinateForView, startYCoordinateForView, totalWidth, heightOfView);
         } else {
-            _tableView.frame = CGRectMake(0, 500, 320, 200);
+            heightOfView = self.view.frame.size.height - Collapsed_Height;
+            _tableView.frame = CGRectMake(startXCoordinateForView, startYCoordinateForView, totalWidth, heightOfView);
         }
+
+        
+    }completion:^(BOOL finished) {
+        
+        [_collectionView reloadData];
+        [_tableView reloadData];
     }];
-    
-    isExpanded =  !isExpanded;
 }
 
 #define ItemsPerRow 7
@@ -303,10 +337,11 @@
 
 #define OddColor [UIColor clearColor]
 #define EvenColor [UIColor groupTableViewBackgroundColor]
+//#define TodayColor [UIColor blackColor]
 
 // The cell that is returned must be retrieved from a call to -dequeueReusableCellWithReuseIdentifier:forIndexPath:
-- (UICollectionViewCell *)collectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath
-{
+- (UICollectionViewCell *)collectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath {
+    
     CalendarDay *calendarDay = _listOfItems[indexPath.row];
     
     NSDateComponents *componentsFromCalendarDay = [[CalendarUtils calendar] components:NSCalendarUnitMonth | NSCalendarUnitDay fromDate:calendarDay.associatedDate];
@@ -319,6 +354,7 @@
         } else {
             cellWithMonth.backgroundColor = OddColor;
         }
+        
         [cellWithMonth updateWithModel:calendarDay];
         
         return cellWithMonth;
@@ -326,11 +362,13 @@
     } else {
         
         CalendarViewCell *cell = [collectionView dequeueReusableCellWithReuseIdentifier:@"CellIdentifier" forIndexPath:indexPath];
+        
         if (componentsFromCalendarDay.month % 2 == 0) {
             cell.backgroundColor = EvenColor;
         } else {
             cell.backgroundColor = OddColor;
         }
+        
         [cell updateWithModel:calendarDay];
         
         if (self.selectedDate) {
@@ -379,20 +417,20 @@
 }
 
 - (void)scrollViewDidEndScrollingAnimation:(UIScrollView *)scrollView {
-    if (scrollView.tag == 1001 && [scrollView isKindOfClass:[UICollectionView class]]) {
+    if (scrollView.tag == Tag_CalendarView && [scrollView isKindOfClass:[UICollectionView class]]) {
         NSLog(@"Collection");
     }
-    if (scrollView.tag == 1002 && [scrollView isKindOfClass:[UITableView class]]) {
+    if (scrollView.tag == Tag_EventView && [scrollView isKindOfClass:[UITableView class]]) {
         NSLog(@"TableView");
     }
 }
 
 - (void)scrollViewDidEndDragging:(UIScrollView *)scrollView willDecelerate:(BOOL)decelerate {
     
-    if (scrollView.tag == 1001 && [scrollView isKindOfClass:[UICollectionView class]]) {
+    if (scrollView.tag == Tag_CalendarView && [scrollView isKindOfClass:[UICollectionView class]]) {
         NSLog(@"Collection");
     }
-    if (scrollView.tag == 1002 && [scrollView isKindOfClass:[UITableView class]]) {
+    if (scrollView.tag == Tag_EventView && [scrollView isKindOfClass:[UITableView class]]) {
         NSLog(@"TableView");
         
         NSArray *visibleCellsFromEventsView = [_tableView visibleCells];
@@ -433,6 +471,20 @@
             
             CalendarEvent *event = [day.eventsOnDate objectAtIndex:indexPath.row];
             
+            if (event.isSkype) {
+               
+                SkypeEventCell *skypeEventCell = [tableView dequeueReusableCellWithIdentifier:@"SkypeEventCell"];
+                
+                if (!skypeEventCell) {
+                    skypeEventCell = [[SkypeEventCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:@"SkypeEventCell"];
+                }
+                
+                [skypeEventCell updateWithEvent:event];
+                
+                return skypeEventCell;
+                
+            } else {
+                
                 EventCell *eventCell = [tableView dequeueReusableCellWithIdentifier:@"EventCell"];
                 
                 if (!eventCell) {
@@ -441,8 +493,13 @@
                 
                 [eventCell updateWithEvent:event];
                 return eventCell;
+                
+            }
         }
     }
+    
+    cell.textLabel.text = NSLocalizedString(@"No Events", nil);
+    cell.textLabel.textColor = RegularTextColor;
     
     return cell;
 }
@@ -465,6 +522,25 @@
 
 - (CGFloat)tableView:(UITableView *)tableView heightForHeaderInSection:(NSInteger)section {
     return 30;
+}
+
+- (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath {
+    
+    CalendarDay *day = [_listOfItems objectAtIndex:indexPath.section];
+
+    if (day.eventsOnDate && day.eventsOnDate.count) {
+        
+        if (day.eventsOnDate[indexPath.row]) {
+            
+            CalendarEvent *event = [day.eventsOnDate objectAtIndex:indexPath.row];
+            
+            if (event.isSkype) {
+                return 60;
+            }
+        }
+    }
+    
+    return 44;
 }
 
 - (UIView *)tableView:(UITableView *)tableView viewForHeaderInSection:(NSInteger)section {

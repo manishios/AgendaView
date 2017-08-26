@@ -1,19 +1,52 @@
 {
-	"events": [{
-			"id": 1,
-			"title": "My First Event",
-			"allDay": 0,
-			"start": "2015-12-08T19:54:49.7938372+00:00",
-			"end": "2015-12-08T23:54:49.7938372+00:00"
-		},
-		{
-			"id": 2,
-			"title": "My Second Event",
-			"allDay": 1,
-			"start": "2015-12-08T10:54:49.7938372+00:00",
-			"end": "2015-12-08T12:54:49.7938372+00:00",
-            "duration": "30",
-            "isSkype":1
-		}
-	]
+    "events": [{
+               "id": 1,
+               "title": "My First Event",
+               "allDay": 0,
+               "start": "1503744600",
+               "end": "1503748200"
+               },
+               {
+               "id": 2,
+               "title": "My Second Event",
+               "allDay": 1,
+               "start": "1503754600",
+               "end": "1503768200",
+               "duration": "30",
+               "isSkype": 1,
+               "participants": [{
+                                "skypeName": "first",
+                                "icon": "firstParticipant.png"
+                                },
+                                {
+                                "skypeName": "second",
+                                "icon": "secondParticipant.png"
+                                },
+                                {
+                                "skypeName": "first",
+                                "icon": "firstParticipant.png"
+                                },
+                                {
+                                "skypeName": "second",
+                                "icon": "secondParticipant.png"
+                                },
+                                {
+                                "skypeName": "first",
+                                "icon": "firstParticipant.png"
+                                },
+                                {
+                                "skypeName": "second",
+                                "icon": "secondParticipant.png"
+                                },
+                                {
+                                "skypeName": "first",
+                                "icon": "firstParticipant.png"
+                                },
+                                {
+                                "skypeName": "second",
+                                "icon": "secondParticipant.png"
+                                }
+                                ]
+               }
+               ]
 }

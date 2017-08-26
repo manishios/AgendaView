@@ -22,14 +22,15 @@
     self = [super initWithFrame:frame];
     
     if (self) {
+        _monthName = [[UILabel alloc] initWithFrame:CGRectZero];
+        _monthName.textAlignment = NSTextAlignmentCenter;
+        _monthName.textColor = RegularTextColor;
+        
         self.dateText = [[UILabel alloc] initWithFrame:self.contentView.frame];
         _dateText.textColor = RegularTextColor;
         self.dateText.textAlignment = NSTextAlignmentCenter;
         [self.contentView addSubview:self.dateText];
         
-        _monthName = [[UILabel alloc] initWithFrame:CGRectZero];
-        _monthName.textAlignment = NSTextAlignmentCenter;
-        _monthName.textColor = RegularTextColor;
         [self.contentView addSubview:_monthName];
     }
     
@@ -47,9 +48,11 @@
         
         NSString *monthText = [NSString stringWithFormat:@"%@", [MonthUtil shortSymbolForMonth:(int)[componentsFromCalendarDay month]]];
         
-        self.dateText.frame = CGRectMake(0, 0, self.contentView.frame.size.width, self.contentView.frame.size.height/2);
-        [self.monthName setFrame:CGRectMake(0, self.contentView.frame.size.height/2, self.contentView.frame.size.width, self.contentView.frame.size.height/2)];
+        [self.monthName setFrame:CGRectMake(0, 0, self.contentView.frame.size.width, self.contentView.frame.size.height/2)];
         self.monthName.text = monthText;
+
+        [self.dateText setFrame:CGRectMake(0, self.contentView.frame.size.height/2, self.contentView.frame.size.width, self.contentView.frame.size.height/2)];
+        
     } else {
         _monthName.hidden = YES;
     }

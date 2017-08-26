@@ -7,6 +7,7 @@
 //
 
 #import <Foundation/Foundation.h>
+@class SkypeParticipant;
 
 @interface CalendarEvent : NSObject
 
@@ -17,6 +18,7 @@
 @property (nonatomic, strong) NSString *meetingTitle;
 @property (nonatomic) BOOL isAllDay;
 @property (nonatomic) BOOL isSkype;
+@property (nonatomic) NSArray *participantList;
 
 + (CalendarEvent *)createEventFromInfo:(NSDictionary *)eventInfo;
 @end
