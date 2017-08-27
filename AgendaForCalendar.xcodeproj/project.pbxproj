@@ -24,6 +24,8 @@
 		675E0DEA1F320470001EBFE8 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 675E0DE81F320470001EBFE8 /* LaunchScreen.storyboard */; };
 		67B282C21F5126E800D7E66A /* SkypeEventCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 67B282C11F5126E800D7E66A /* SkypeEventCell.m */; };
 		67B282C51F51828800D7E66A /* SkypeParticipant.m in Sources */ = {isa = PBXBuildFile; fileRef = 67B282C41F51828800D7E66A /* SkypeParticipant.m */; };
+		67B282C81F5195C800D7E66A /* DateUtil.m in Sources */ = {isa = PBXBuildFile; fileRef = 67B282C71F5195C800D7E66A /* DateUtil.m */; };
+		67B282CB1F524C2200D7E66A /* UnicodeUtil.m in Sources */ = {isa = PBXBuildFile; fileRef = 67B282CA1F524C2200D7E66A /* UnicodeUtil.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -59,6 +61,10 @@
 		67B282C11F5126E800D7E66A /* SkypeEventCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = SkypeEventCell.m; path = "Table Cells/SkypeEventCell.m"; sourceTree = "<group>"; };
 		67B282C31F51828800D7E66A /* SkypeParticipant.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SkypeParticipant.h; path = Model/SkypeParticipant.h; sourceTree = "<group>"; };
 		67B282C41F51828800D7E66A /* SkypeParticipant.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = SkypeParticipant.m; path = Model/SkypeParticipant.m; sourceTree = "<group>"; };
+		67B282C61F5195C800D7E66A /* DateUtil.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = DateUtil.h; path = Utility/DateUtil.h; sourceTree = "<group>"; };
+		67B282C71F5195C800D7E66A /* DateUtil.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = DateUtil.m; path = Utility/DateUtil.m; sourceTree = "<group>"; };
+		67B282C91F524C2200D7E66A /* UnicodeUtil.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = UnicodeUtil.h; path = Utility/UnicodeUtil.h; sourceTree = "<group>"; };
+		67B282CA1F524C2200D7E66A /* UnicodeUtil.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = UnicodeUtil.m; path = Utility/UnicodeUtil.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -95,6 +101,10 @@
 				673FDD2A1F4063FF00D679E2 /* WeekdayUtil.h */,
 				673FDD2B1F4063FF00D679E2 /* WeekdayUtil.m */,
 				673FDD411F4188E800D679E2 /* Constants.h */,
+				67B282C61F5195C800D7E66A /* DateUtil.h */,
+				67B282C71F5195C800D7E66A /* DateUtil.m */,
+				67B282C91F524C2200D7E66A /* UnicodeUtil.h */,
+				67B282CA1F524C2200D7E66A /* UnicodeUtil.m */,
 			);
 			name = Utility;
 			sourceTree = "<group>";
@@ -251,6 +261,7 @@
 				673FDD381F41855A00D679E2 /* CalendarDay.m in Sources */,
 				675E0DE21F320470001EBFE8 /* ViewController.m in Sources */,
 				673FDD2F1F40A4F900D679E2 /* CalendarEvent.m in Sources */,
+				67B282C81F5195C800D7E66A /* DateUtil.m in Sources */,
 				673FDD561F41DEDD00D679E2 /* EventCell.m in Sources */,
 				673FDD3E1F4185E600D679E2 /* CalendarViewCellWithMonth.m in Sources */,
 				67B282C21F5126E800D7E66A /* SkypeEventCell.m in Sources */,
@@ -261,6 +272,7 @@
 				673FDD291F40634A00D679E2 /* MonthUtil.m in Sources */,
 				673FDD3B1F4185AB00D679E2 /* CalendarViewCell.m in Sources */,
 				675E0DDC1F320470001EBFE8 /* main.m in Sources */,
+				67B282CB1F524C2200D7E66A /* UnicodeUtil.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

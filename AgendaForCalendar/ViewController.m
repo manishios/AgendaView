@@ -17,6 +17,7 @@
 #import "Constants.h"
 #import "EventCell.h"
 #import "SkypeEventCell.h"
+#import "DateUtil.h"
 
 @interface ViewController () <UICollectionViewDelegate, UICollectionViewDataSource, UIScrollViewDelegate, UITableViewDelegate, UITableViewDataSource, UICollectionViewDelegateFlowLayout>
 
@@ -37,8 +38,8 @@
 @property (nonatomic) NSIndexPath *previouslySelectedIndexPath;
 @property (nonatomic) UITableView *eventsListView;
 @property (nonatomic) NSInteger daysInWeek;
-@property (strong, readwrite, nonatomic) NSDate *selectedDate;
-@property (strong, readwrite, nonatomic) NSArray *eventList;
+@property (nonatomic) NSDate *selectedDate;
+@property (nonatomic) NSDictionary *events;
 @end
 
 // Tags
@@ -48,6 +49,14 @@
 // Calendar range -- Start and end date in Unix epoch
 #define StartDate_Epoch 1262476800
 #define EndDate_Epoch 1578700800
+
+#define Skype_Event_Cell_Height 70
+#define Other_Event_Cell_Height 44
+#define Collapsed_Height 150
+#define Height_Of_Header_Section 30
+
+#define OddColor [UIColor clearColor]
+#define EvenColor [UIColor groupTableViewBackgroundColor]
 
 @implementation ViewController
 
@@ -98,16 +107,16 @@
         _listOfItems = [NSMutableArray new];
     }
     
-    NSCalendar *gregorian = [CalendarUtils calendar];
+    NSCalendar *appCalendar = [CalendarUtils calendar];
     
     NSDate *firstDate = [NSDate dateWithTimeIntervalSince1970:StartDate_Epoch];
     NSDate *endDate = [NSDate dateWithTimeIntervalSince1970:EndDate_Epoch];
     
     NSInteger daysBetweenDates = [self daysBetweenDate:firstDate andDate:endDate];
-    NSDateComponents *componentsForFirstDate = [gregorian components:NSCalendarUnitMonth | NSCalendarUnitDay | NSCalendarUnitYear fromDate:firstDate];
+    NSDateComponents *componentsForFirstDate = [appCalendar components:NSCalendarUnitMonth | NSCalendarUnitDay | NSCalendarUnitYear fromDate:firstDate];
     
     // Get the weekday component of the current date
-    NSDateComponents *weekdayComponents = [gregorian components:NSCalendarUnitWeekday fromDate:firstDate];
+    NSDateComponents *weekdayComponents = [appCalendar components:NSCalendarUnitWeekday fromDate:firstDate];
     
     /*
      Create a date components to represent the number of days to subtract
@@ -119,7 +128,7 @@
      */
     NSDateComponents *componentsToSubtract = [[NSDateComponents alloc] init];
     /* Substract [gregorian firstWeekday] to handle first day of the week being something else than Sunday */
-    [componentsToSubtract setDay: - ([weekdayComponents weekday] - [gregorian firstWeekday])];
+    [componentsToSubtract setDay: - ([weekdayComponents weekday] - [appCalendar firstWeekday])];
     
     NSDate *associatedDate = firstDate;
     
@@ -134,47 +143,54 @@
         } else {
             [deltaComps setDay:1];
         }
-        associatedDate = [gregorian dateByAddingComponents:deltaComps toDate:associatedDate options:0];
+        associatedDate = [appCalendar dateByAddingComponents:deltaComps toDate:associatedDate options:0];
         calendarDay.associatedDate = associatedDate;
         
+        calendarDay.formattedDate = [DateUtil formatEventDate:associatedDate];
+        
         calendarDay.eventsOnDate = nil;
-        NSDateComponents *components = [gregorian components:NSCalendarUnitDay fromDate:associatedDate];
+        NSDateComponents *components = [appCalendar components:NSCalendarUnitDay fromDate:associatedDate];
         calendarDay.displayDate = [NSString stringWithFormat:@"%ld", components.day];
         
         if ([CalendarUtils isDate1:[NSDate date] theSameDayAs:associatedDate]) {
             focusedIndexPath = [NSIndexPath indexPathForItem:(index - componentsForFirstDate.day) inSection:0];
         }
         
-        if(index % 2) {
-            calendarDay.eventsOnDate = self.eventList;
+        if([_events.allKeys containsObject:calendarDay.formattedDate]) {
+            calendarDay.eventsOnDate = (NSArray *)[_events objectForKey:calendarDay.formattedDate];
         }
         
         [self.listOfItems addObject:calendarDay];
     }
 }
 
-- (void)doSomethingWithTheJson
-{
+- (void)doSomethingWithTheJson {
+
     NSDictionary *dict = [self JSONFromFile];
     
     NSArray *events = [dict objectForKey:@"events"];
     
-    NSMutableArray *listOfEvents = [NSMutableArray new];
+    NSMutableDictionary *eventSet = [NSMutableDictionary new];
     
     for (NSDictionary *event in events) {
         
         CalendarEvent *cEvent = [CalendarEvent createEventFromInfo:event];
-        [listOfEvents addObject:cEvent];
-
-        NSLog(@"");
         
+        NSMutableArray *eventList = [NSMutableArray new];
+        
+        if ([eventSet.allKeys containsObject:cEvent.formattedEventDate]) {
+            NSArray *listOfEvents = (NSArray*)[eventSet objectForKey:cEvent.formattedEventDate];
+            eventList = [listOfEvents mutableCopy];
+        }
+        
+        [eventList addObject:cEvent];
+        [eventSet setObject:eventList forKey:cEvent.formattedEventDate];
     }
     
-    self.eventList = [NSArray arrayWithArray:listOfEvents];
+    self.events = [NSDictionary dictionaryWithDictionary:eventSet];
 }
 
-- (NSDictionary *)JSONFromFile
-{
+- (NSDictionary *)JSONFromFile {
     NSString *path = [[NSBundle mainBundle] pathForResource:@"events" ofType:@"json"];
     NSData *data = [NSData dataWithContentsOfFile:path];
     return [NSJSONSerialization JSONObjectWithData:data options:kNilOptions error:nil];
@@ -249,7 +265,7 @@
     
     [self populateDataSource];
 
-    self.selectedDate = [(CalendarDay *)[_listOfItems objectAtIndex:0] associatedDate];
+//    self.selectedDate = [(CalendarDay *)[_listOfItems objectAtIndex:0] associatedDate];
     
     // Initiate the calendar header view
     [self initiateHeaderView];
@@ -259,7 +275,7 @@
     
     // Initiate Event list view
     [self initiateEventListView];
-    
+    isExpanded = YES;
 //    [self toggleAgendaView:nil];
 }
 
@@ -270,8 +286,6 @@
                                                                            action:@selector(toggleAgendaView:)];
     self.navigationItem.rightBarButtonItem = toggleViewBarButton;
 }
-
-#define Collapsed_Height 150
 
 - (void)toggleAgendaView:(UIBarButtonItem *)button {
     
@@ -313,31 +327,20 @@
 
 #pragma mark - Custom Collection data source
 
-- (NSInteger)numberOfSectionsInCollectionView:(UICollectionView *)collectionView {
-    return 1;
-}
-
 - (NSInteger)collectionView:(UICollectionView *)collectionView numberOfItemsInSection:(NSInteger)section
 {
     return _listOfItems.count;
 }
 
-- (BOOL)collectionView:(UICollectionView *)collectionView shouldHighlightItemAtIndexPath:(NSIndexPath *)indexPath {
- 
-    return YES;
-}
-
 - (void)scrollToDay {
+    
     [UIView animateWithDuration:0.1 animations:^{
         [self.collectionView scrollToItemAtIndexPath:focusedIndexPath atScrollPosition:UICollectionViewScrollPositionCenteredVertically animated:NO];
     }completion:^(BOOL finished){
         [self collectionView:_collectionView didSelectItemAtIndexPath:focusedIndexPath];
     }];
+    
 }
-
-#define OddColor [UIColor clearColor]
-#define EvenColor [UIColor groupTableViewBackgroundColor]
-//#define TodayColor [UIColor blackColor]
 
 // The cell that is returned must be retrieved from a call to -dequeueReusableCellWithReuseIdentifier:forIndexPath:
 - (UICollectionViewCell *)collectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath {
@@ -394,6 +397,10 @@
         
         CalendarDay *day = _listOfItems[indexPath.row];
         CalendarViewCell *cell = (CalendarViewCell *)[collectionView cellForItemAtIndexPath:indexPath];
+        
+        CALayer *cellLayer = cell.contentView.layer;
+        cellLayer.cornerRadius = cell.contentView.frame.size.width / 2;
+        
         day.isDateSelected = YES;
         
         [cell updateWithModel:day];
@@ -416,22 +423,9 @@
     self.selectedDate = nil;
 }
 
-- (void)scrollViewDidEndScrollingAnimation:(UIScrollView *)scrollView {
-    if (scrollView.tag == Tag_CalendarView && [scrollView isKindOfClass:[UICollectionView class]]) {
-        NSLog(@"Collection");
-    }
-    if (scrollView.tag == Tag_EventView && [scrollView isKindOfClass:[UITableView class]]) {
-        NSLog(@"TableView");
-    }
-}
-
 - (void)scrollViewDidEndDragging:(UIScrollView *)scrollView willDecelerate:(BOOL)decelerate {
     
-    if (scrollView.tag == Tag_CalendarView && [scrollView isKindOfClass:[UICollectionView class]]) {
-        NSLog(@"Collection");
-    }
     if (scrollView.tag == Tag_EventView && [scrollView isKindOfClass:[UITableView class]]) {
-        NSLog(@"TableView");
         
         NSArray *visibleCellsFromEventsView = [_tableView visibleCells];
         UITableViewCell *topMostCell = [visibleCellsFromEventsView objectAtIndex:0];
@@ -509,19 +503,29 @@
     
     NSDateComponents *components = [[CalendarUtils calendar] components:NSCalendarUnitWeekday | NSCalendarUnitDay | NSCalendarUnitMonth | NSCalendarUnitYear fromDate:day.associatedDate];
     
-    NSString *messageToDisplay = [NSString stringWithFormat:@"%@, %d %@ %ld", [WeekdayUtil symbolForDay:(int)[components weekday]], (int)[components day], [MonthUtil symbolForMonth:(int)[components month]], [components year]];
+    NSString *messageToDisplay;
     
+    if([CalendarUtils isDate1:[NSDate date] theSameDayAs:day.associatedDate]) {
+
+        messageToDisplay = [NSString stringWithFormat:@"%@ %@ %@, %d %@ %ld", NSLocalizedString(@"Today", nil), DefaultEventSeparator, [WeekdayUtil symbolForDay:(int)[components weekday]], (int)[components day], [MonthUtil symbolForMonth:(int)[components month]], [components year]];
+        
+    } else {
+ 
+        messageToDisplay = [NSString stringWithFormat:@"%@, %d %@ %ld", [WeekdayUtil symbolForDay:(int)[components weekday]], (int)[components day], [MonthUtil symbolForMonth:(int)[components month]], [components year]];
+        
+    }
     return messageToDisplay;
 }
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
     
+    [tableView deselectRowAtIndexPath:indexPath animated:YES];
     focusedIndexPath = [NSIndexPath indexPathForItem:indexPath.section inSection:0];
     [self scrollToDay];
 }
 
 - (CGFloat)tableView:(UITableView *)tableView heightForHeaderInSection:(NSInteger)section {
-    return 30;
+    return Height_Of_Header_Section;
 }
 
 - (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath {
@@ -535,21 +539,28 @@
             CalendarEvent *event = [day.eventsOnDate objectAtIndex:indexPath.row];
             
             if (event.isSkype) {
-                return 60;
+                return Skype_Event_Cell_Height;
             }
         }
     }
     
-    return 44;
+    return Other_Event_Cell_Height;
 }
 
 - (UIView *)tableView:(UITableView *)tableView viewForHeaderInSection:(NSInteger)section {
     
     UITableViewHeaderFooterView *headerView = [[UITableViewHeaderFooterView alloc] init];
     UILabel *headerLabel = [[UILabel alloc] initWithFrame:CGRectMake(10, 0, totalWidth-20, 30)];
-    headerLabel.textColor = RegularTextColor;
     headerLabel.font = [UIFont systemFontOfSize:MediumFontSize];
     headerLabel.text = [self titleForHeaderInSection:section];
+    
+    NSString *today = NSLocalizedString(@"Today", nil);
+    
+    if ([[headerLabel.text substringWithRange:NSMakeRange(0, today.length)] isEqualToString:today]) {
+        headerLabel.textColor = IdentifiedDayTextColor;
+    } else {
+        headerLabel.textColor = RegularTextColor;
+    }
     [headerView addSubview:headerLabel];
     
     return headerView;

@@ -58,13 +58,13 @@
     }
     
     if (calendarDay.isDateSelected) {
-        layer.backgroundColor = [[UIColor blueColor] CGColor];
-        self.dateText.textColor = [UIColor whiteColor];
-        _monthName.textColor = [UIColor whiteColor];
+        layer.backgroundColor = HighlightedBackgroundLayerColor;
+        _dateText.textColor = HighlightedTextColor;
+        _monthName.textColor = HighlightedTextColor;
         
     } else {
         layer.backgroundColor = [[UIColor clearColor] CGColor];
-        self.dateText.textColor = RegularTextColor;
+        _dateText.textColor = RegularTextColor;
         _monthName.textColor = RegularTextColor;
     }
     

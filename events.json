@@ -1,18 +1,64 @@
 {
     "events": [{
                "id": 1,
-               "title": "My First Event",
-               "allDay": 0,
+               "title": "Sample full day event",
+               "allDay": 1,
                "start": "1503744600",
                "end": "1503748200"
                },
                {
+               "id": 1,
+               "title": "Independence Day",
+               "allDay": 1,
+               "start": "1502755200",
+               },
+               {
                "id": 2,
                "title": "My Second Event",
-               "allDay": 1,
-               "start": "1503754600",
-               "end": "1503768200",
-               "duration": "30",
+               "allDay": 0,
+               "start": "1503767400",
+               "end": "1503769200",
+               "isSkype": 1,
+               "participants": [{
+                                "skypeName": "first",
+                                "icon": "firstParticipant.png"
+                                },
+                                {
+                                "skypeName": "second",
+                                "icon": "secondParticipant.png"
+                                },
+                                {
+                                "skypeName": "first",
+                                "icon": "firstParticipant.png"
+                                },
+                                {
+                                "skypeName": "second",
+                                "icon": "secondParticipant.png"
+                                },
+                                {
+                                "skypeName": "first",
+                                "icon": "firstParticipant.png"
+                                },
+                                {
+                                "skypeName": "second",
+                                "icon": "secondParticipant.png"
+                                },
+                                {
+                                "skypeName": "first",
+                                "icon": "firstParticipant.png"
+                                },
+                                {
+                                "skypeName": "second",
+                                "icon": "secondParticipant.png"
+                                }
+                                ]
+               },
+               {
+               "id": 2,
+               "title": "Daily Stand up",
+               "allDay": 0,
+               "start": "1503920700",
+               "end": "1503921600",
                "isSkype": 1,
                "participants": [{
                                 "skypeName": "first",

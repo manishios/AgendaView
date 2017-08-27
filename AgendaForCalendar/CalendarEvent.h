@@ -11,6 +11,7 @@
 
 @interface CalendarEvent : NSObject
 
+@property (nonatomic, strong) NSString *formattedEventDate;
 @property (nonatomic, strong) NSString *startTime;
 @property (nonatomic, strong) NSString *endTime;
 @property (nonatomic, strong) NSString *duration;

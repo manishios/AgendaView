@@ -8,6 +8,7 @@
 
 #import "CalendarEvent.h"
 #import "SkypeParticipant.h"
+#import "DateUtil.h"
 
 @implementation CalendarEvent
 
@@ -16,17 +17,28 @@
     if (eventInfo) {
         CalendarEvent *event = [CalendarEvent new];
         
+        NSDateFormatter *formatter = [NSDateFormatter new];
+        [formatter setDateFormat:@"h:mm a"];
+    
         NSDate *startDate = [NSDate dateWithTimeIntervalSince1970:[eventInfo[@"start"] longLongValue]];
-        event.startTime = [startDate descriptionWithLocale:[NSLocale currentLocale]];
-
-        NSDate *endDate = [NSDate dateWithTimeIntervalSince1970:[eventInfo[@"end"] longLongValue]];
-        event.endTime = [endDate descriptionWithLocale:[NSLocale currentLocale]];
-
-        event.duration = eventInfo[@"duration"];
-        event.endTime = eventInfo[@"end"];
+        event.startTime = [formatter stringFromDate:startDate];
+        
+        event.formattedEventDate = [DateUtil formatEventDate:startDate];
+        
+        NSDate *endDate;
+        if (eventInfo[@"end"]) {
+            endDate = [NSDate dateWithTimeIntervalSince1970:[eventInfo[@"end"] longLongValue]];
+            event.endTime = [formatter stringFromDate:endDate];
+        }
+        
+        formatter = nil;
+        
+        event.duration = [DateUtil durationBetweenDates:startDate endDate:endDate];
+        
+        event.isAllDay = [eventInfo[@"allDay"] boolValue];
+        
         event.meetingId = [eventInfo[@"id"] longValue];
         event.meetingTitle = eventInfo[@"title"];
-        event.isAllDay = [eventInfo[@"allDay"] boolValue];
         event.isSkype = [eventInfo[@"isSkype"] boolValue];
         
         if (event.isSkype && [eventInfo[@"participants"] count]) {

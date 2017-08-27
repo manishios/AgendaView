@@ -8,6 +8,7 @@
 
 #import "CalendarViewCell.h"
 #import "Constants.h"
+#import "CalendarUtils.h"
 
 @interface CalendarViewCell()
 @property (nonatomic) UILabel *dateText;
@@ -22,6 +23,7 @@
         self.dateText = [[UILabel alloc] initWithFrame:self.contentView.frame];
         
         _dateText.textAlignment = NSTextAlignmentCenter;
+        _dateText.numberOfLines = 0;
         _dateText.textColor = RegularTextColor;
         [self.contentView addSubview:_dateText];
     }
@@ -31,12 +33,12 @@
 
 - (void)updateWithModel:(CalendarDay *)calendarDay {
     
-    self.dateText.text = calendarDay.displayDate;
+    self.dateText.text = (calendarDay.eventsOnDate.count) ? [NSString stringWithFormat:@"%@\n%@", calendarDay.displayDate, DefaultEventSeparator] : calendarDay.displayDate;
     
     CALayer *layer = self.contentView.layer;
     
     if (calendarDay.isDateSelected) {
-        layer.backgroundColor = [[UIColor blueColor] CGColor];
+        layer.backgroundColor = HighlightedBackgroundLayerColor;
         _dateText.textColor = [UIColor whiteColor];
     } else {
         layer.backgroundColor = [[UIColor clearColor] CGColor];

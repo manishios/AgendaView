@@ -13,6 +13,7 @@
 @property (nonatomic, strong, readwrite) NSString *displayDate;
 @property (nonatomic, strong, readwrite) NSArray *eventsOnDate;
 @property (readwrite) BOOL isDateSelected;
-@property (nonatomic, strong, readwrite) NSDate *associatedDate;
+@property (nonatomic) NSDate *associatedDate;
+@property (nonatomic) NSString *formattedDate;
 
 @end
