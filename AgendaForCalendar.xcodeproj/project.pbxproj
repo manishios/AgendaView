@@ -216,7 +216,6 @@
 				TargetAttributes = {
 					675E0DD61F320470001EBFE8 = {
 						CreatedOnToolsVersion = 8.3.2;
-						DevelopmentTeam = FTCKKZBR2C;
 						ProvisioningStyle = Automatic;
 					};
 				};
@@ -397,11 +396,11 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
-				DEVELOPMENT_TEAM = FTCKKZBR2C;
+				DEVELOPMENT_TEAM = "";
 				INFOPLIST_FILE = AgendaForCalendar/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 10.1;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
-				PRODUCT_BUNDLE_IDENTIFIER = com.bwin.sportsbook.at.dev;
+				PRODUCT_BUNDLE_IDENTIFIER = com.manishkumarapps.agendaview;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 			};
@@ -412,11 +411,11 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
-				DEVELOPMENT_TEAM = FTCKKZBR2C;
+				DEVELOPMENT_TEAM = "";
 				INFOPLIST_FILE = AgendaForCalendar/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 10.1;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
-				PRODUCT_BUNDLE_IDENTIFIER = com.bwin.sportsbook.at.dev;
+				PRODUCT_BUNDLE_IDENTIFIER = com.manishkumarapps.agendaview;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 			};
